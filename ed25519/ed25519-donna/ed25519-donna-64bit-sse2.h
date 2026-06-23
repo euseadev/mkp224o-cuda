@@ -10,7 +10,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 	uint64_t u = (breg + mask) ^ mask;
 
 	__asm__ __volatile__ (
-		/* ysubx+xaddy+t2d */
+		
 		"movq %0, %%rax                  ;\n"
 		"movd %%rax, %%xmm14             ;\n"
 		"pshufd $0x00, %%xmm14, %%xmm14  ;\n"
@@ -21,7 +21,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"pxor %%xmm4, %%xmm4             ;\n"
 		"pxor %%xmm5, %%xmm5             ;\n"
 
-		/* 0 */
+		
 		"movq $0, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -36,7 +36,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm6, %%xmm2              ;\n"
 		"por %%xmm7, %%xmm3              ;\n"
 
-		/* 1 */
+		
 		"movq $1, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -60,7 +60,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* 2 */
+		
 		"movq $2, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -84,7 +84,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* 3 */
+		
 		"movq $3, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -108,7 +108,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* 4 */
+		
 		"movq $4, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -132,7 +132,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* 5 */
+		
 		"movq $5, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -156,7 +156,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* 6 */
+		
 		"movq $6, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -180,7 +180,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* 7 */
+		
 		"movq $7, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -204,7 +204,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* 8 */
+		
 		"movq $8, %%rax                  ;\n"
 		"movd %%rax, %%xmm15             ;\n"
 		"pshufd $0x00, %%xmm15, %%xmm15  ;\n"
@@ -228,7 +228,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm10, %%xmm4             ;\n"
 		"por %%xmm11, %%xmm5             ;\n"
 
-		/* conditionally swap ysubx and xaddy */
+		
 		"movq %3, %%rax                  ;\n"
 		"xorq $1, %%rax                  ;\n"
 		"movd %%rax, %%xmm14             ;\n"
@@ -246,7 +246,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"pxor %%xmm0, %%xmm2             ;\n"
 		"pxor %%xmm1, %%xmm3             ;\n"
 
-		/* store ysubx */
+		
 		"xorq %%rax, %%rax               ;\n"
 		"movd %%xmm0, %%rcx              ;\n"
 		"movd %%xmm0, %%r8               ;\n"
@@ -291,7 +291,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"movl %%r13d, 36(%2)             ;\n"
 		"movq %%rax, 40(%2)              ;\n"
 
-		/* store xaddy */
+		
 		"movd %%xmm2, %%rcx              ;\n"
 		"movd %%xmm2, %%r8               ;\n"
 		"movd %%xmm3, %%rsi              ;\n"
@@ -335,7 +335,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"movl %%r13d, 84(%2)             ;\n"
 		"movq %%rax, 88(%2)              ;\n"
 
-		/* extract t2d */
+		
 		"xorq %%rax, %%rax               ;\n"
 		"movd %%xmm4, %%rcx              ;\n"
 		"movd %%xmm4, %%r8               ;\n"
@@ -386,7 +386,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"punpcklqdq %%xmm8, %%xmm0       ;\n"
 		"punpcklqdq %%xmm6, %%xmm1       ;\n"
 
-		/* set up 2p in to 3/4 */
+		
 		"movl $0x7ffffda, %%ecx          ;\n"
 		"movl $0x3fffffe, %%edx          ;\n"
 		"movl $0x7fffffe, %%eax          ;\n"
@@ -399,7 +399,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"movdqa %%xmm4, %%xmm5           ;\n"
 		"punpcklqdq %%xmm4, %%xmm4       ;\n"
 
-		/* subtract and conditionally move */
+		
 		"movl %3, %%ecx                  ;\n"
 		"sub $1, %%ecx                   ;\n"
 		"movd %%ecx, %%xmm6              ;\n"
@@ -419,12 +419,12 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm7, %%xmm1              ;\n"
 		"por %%xmm3, %%xmm2              ;\n"
 
-		/* store t2d */
+		
 		"movdqa %%xmm0, 96(%2)           ;\n"
 		"movdqa %%xmm1, 112(%2)          ;\n"
 		"movdqa %%xmm2, 128(%2)          ;\n"
 		:
-		: "m"(u), "r"(&table[pos * 8]), "r"(t), "m"(sign) /* %0 = u, %1 = table, %2 = t, %3 = sign */
+		: "m"(u), "r"(&table[pos * 8]), "r"(t), "m"(sign) 
 		:
 			"%rax", "%rcx", "%rdx", "%rdi", "%rsi", "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", 
 			"%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7", "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm14", "%xmm14",
@@ -432,5 +432,5 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 	);
 }
 
-#endif /* defined(ED25519_GCC_64BIT_SSE_CHOOSE) */
+#endif 
 

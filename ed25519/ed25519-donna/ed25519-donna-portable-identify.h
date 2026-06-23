@@ -1,10 +1,10 @@
-/* os */
+
 #if defined(_WIN32)	|| defined(_WIN64) || defined(__TOS_WIN__) || defined(__WINDOWS__)
 	#define OS_WINDOWS
 #elif defined(sun) || defined(__sun) || defined(__SVR4) || defined(__svr4__)
 	#define OS_SOLARIS
 #else
-	#include <sys/param.h> /* need this to define BSD */
+	#include <sys/param.h> 
 	#define OS_NIX
 	#if defined(__linux__)
 		#define OS_LINUX
@@ -21,7 +21,6 @@
 #endif
 
 
-/* compiler */
 #if defined(_MSC_VER)
 	#define COMPILER_MSVC
 #endif
@@ -44,7 +43,6 @@
 
 
 
-/* cpu */
 #if defined(__amd64__) || defined(__amd64) || defined(__x86_64__ ) || defined(_M_X64)
 	#define CPU_X86_64
 #elif defined(__i586__) || defined(__i686__) || (defined(_M_IX86) && (_M_IX86 >= 500))
@@ -87,7 +85,6 @@
 	#define CPU_AARCH64
 #endif
 
-/* 64 bit cpu */
 #if defined(CPU_X86_64) || defined(CPU_IA64) || defined(CPU_SPARC64) || defined(CPU_AARCH64) || defined(__64BIT__) || defined(__LP64__) || defined(_LP64) || (defined(_MIPS_SZLONG) && (_MIPS_SZLONG == 64))
 	#define CPU_64BITS
 #endif

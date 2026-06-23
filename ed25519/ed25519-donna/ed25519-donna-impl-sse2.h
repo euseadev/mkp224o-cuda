@@ -1,8 +1,5 @@
 #if defined(ED25519_SSE2)
 
-/*
-	conversions
-*/
 
 static void
 ge25519_p1p1_to_partial(ge25519 *r, const ge25519_p1p1 *p) {
@@ -34,9 +31,6 @@ ge25519_full_to_pniels(ge25519_pniels *p, const ge25519 *r) {
 	curve25519_mul(p->t2d, r->t, ge25519_ec2d);
 }
 
-/*
-	adding & doubling
-*/
 
 static void
 ge25519_add_p1p1(ge25519_p1p1 *r, const ge25519 *p, const ge25519 *q) {
@@ -57,7 +51,7 @@ ge25519_add_p1p1(ge25519_p1p1 *r, const ge25519 *p, const ge25519 *q) {
 	curve25519_untangle64(c, d, cd);
 	curve25519_mul(c, c, ge25519_ec2d);
 	curve25519_add_reduce(d, d, d);
-	/* reduce, so no after_basic is needed later */
+	
 	curve25519_tangle32(bd, b, d);
 	curve25519_tangle32(ac, a, c);
 	curve25519_sub_packed32(bdmac, bd, ac);
@@ -65,7 +59,6 @@ ge25519_add_p1p1(ge25519_p1p1 *r, const ge25519 *p, const ge25519 *q) {
 	curve25519_untangle32(r->x, r->t, bdmac);
 	curve25519_untangle32(r->y, r->z, bdpac);
 }
-
 
 static void
 ge25519_double_p1p1(ge25519_p1p1 *r, const ge25519 *p) {
@@ -180,10 +173,10 @@ ge25519_nielsadd2(ge25519 *r, const ge25519_niels *q) {
 	curve25519_add(h, b, a);
 	curve25519_add_reduce(d, r->z, r->z);
 	curve25519_mul(c, r->t, q->t2d);
-	curve25519_add(g, d, c); /* d is reduced, so no need for after_basic */
+	curve25519_add(g, d, c); 
 	curve25519_tangle32(bd, b, d);
 	curve25519_tangle32(ac, a, c);
-	curve25519_sub_packed32(bdac, bd, ac); /* d is reduced, so no need for after_basic */
+	curve25519_sub_packed32(bdac, bd, ac); 
 	curve25519_untangle32(e, f, bdac);
 	curve25519_tangle64(eg, e, g);
 	curve25519_tangleone64(ff, f);
@@ -203,9 +196,6 @@ ge25519_pnielsadd(ge25519_pniels *r, const ge25519 *p, const ge25519_pniels *q) 
 	ge25519_full_to_pniels(r, &f);
 }
 
-/*
-	pack & unpack
-*/
 
 static void
 ge25519_pack(unsigned char r[32], const ge25519 *p) {
@@ -219,8 +209,7 @@ ge25519_pack(unsigned char r[32], const ge25519 *p) {
 	r[31] ^= ((parity[0] & 1) << 7);
 }
 
-// assumes inz[] points to things in in[]
-// NOTE: leaves in unfinished state
+
 static void
 ge25519_batchpack_destructive_1(bytes32 *out, ge25519 *in, bignum25519 *tmp, size_t num) {
   bignum25519 ALIGN(16) ty;
@@ -237,12 +226,11 @@ static void
 ge25519_batchpack_destructive_finish(bytes32 out, ge25519 *unf) {
   bignum25519 ALIGN(16) tx;
   unsigned char parity[32];
-  // z of unfinished is inverted
+  
   curve25519_mul(tx, unf->x, unf->z);
   curve25519_contract(parity, tx);
   out[31] ^= ((parity[0] & 1) << 7);
 }
-
 
 static int
 ge25519_unpack_negative_vartime(ge25519 *r, const unsigned char p[32]) {
@@ -254,13 +242,13 @@ ge25519_unpack_negative_vartime(ge25519 *r, const unsigned char p[32]) {
 
 	curve25519_expand(r->y, p);
 	curve25519_copy(r->z, one);
-	curve25519_square_times(num, r->y, 1); /* x = y^2 */
-	curve25519_mul(den, num, ge25519_ecd); /* den = dy^2 */
-	curve25519_sub_reduce(num,  num, r->z); /* x = y^2 - 1 */
-	curve25519_add(den, den, r->z); /* den = dy^2 + 1 */
+	curve25519_square_times(num, r->y, 1); 
+	curve25519_mul(den, num, ge25519_ecd); 
+	curve25519_sub_reduce(num,  num, r->z); 
+	curve25519_add(den, den, r->z); 
 
-	/* Computation of sqrt(num/den) */
-	/* 1.: computation of num^((p-5)/8)*den^((7p-35)/8) = (num*den^7)^((p-5)/8) */
+	
+	
 	curve25519_square_times(t, den, 1);
 	curve25519_mul(d3, t, den);
 	curve25519_square_times(r->x, d3, 1);
@@ -268,11 +256,11 @@ ge25519_unpack_negative_vartime(ge25519 *r, const unsigned char p[32]) {
 	curve25519_mul(r->x, r->x, num);
 	curve25519_pow_two252m3(r->x, r->x);
 
-	/* 2. computation of r->x = t * num * den^3 */
+	
 	curve25519_mul(r->x, r->x, d3);
 	curve25519_mul(r->x, r->x, num);
 
-	/* 3. Check if either of the roots works: */
+	
 	curve25519_square_times(t, r->x, 1);
 	curve25519_mul(t, t, den);
 	curve25519_copy(root, t);
@@ -297,10 +285,6 @@ ge25519_unpack_negative_vartime(ge25519 *r, const unsigned char p[32]) {
 
 
 
-/*
-	scalarmults
-*/
-
 #define S1_SWINDOWSIZE 5
 #define S1_TABLE_SIZE (1<<(S1_SWINDOWSIZE-2))
 #define S2_SWINDOWSIZE 7
@@ -322,7 +306,7 @@ ge25519_double_scalarmult_vartime(ge25519 *r, const ge25519 *p1, const bignum256
 	for (i = 0; i < S1_TABLE_SIZE - 1; i++)
 		ge25519_pnielsadd(&pre1[i+1], &d1, &pre1[i]);
 
-	/* set neutral */
+	
 	memset(r, 0, sizeof(ge25519));
 	r->y[0] = 1;
 	r->z[0] = 1;
@@ -363,7 +347,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 	uint32_t u = (b + mask) ^ mask;
 	uint32_t i;
 
-	/* ysubx, xaddy, t2d in packed form. initialize to ysubx = 1, xaddy = 1, t2d = 0 */
+	
 	uint8_t ALIGN(16) packed[96] = {0};
 	packed[0] = 1;
 	packed[32] = 1;
@@ -371,18 +355,18 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 	for (i = 0; i < 8; i++)
 		curve25519_move_conditional_bytes(packed, table[(pos * 8) + i], ge25519_windowb_equal(u, i + 1));
 
-	/* expand in to t */
+	
 	curve25519_expand(t->ysubx, packed +  0);
 	curve25519_expand(t->xaddy, packed + 32);
 	curve25519_expand(t->t2d  , packed + 64);
 
-	/* adjust for sign */
+	
 	curve25519_swap_conditional(t->ysubx, t->xaddy, sign);
 	curve25519_neg(neg, t->t2d);
 	curve25519_swap_conditional(t->t2d, neg, sign);
 }
 
-#endif /* HAVE_GE25519_SCALARMULT_BASE_CHOOSE_NIELS */
+#endif 
 
 static void
 ge25519_scalarmult_base_niels(ge25519 *r, const uint8_t table[256][96], const bignum256modm s) {
@@ -415,4 +399,4 @@ ge25519_scalarmult_base_niels(ge25519 *r, const uint8_t table[256][96], const bi
 	}
 }
 
-#endif /* defined(ED25519_SSE2) */
+#endif 

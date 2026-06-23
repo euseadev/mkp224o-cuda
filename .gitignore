@@ -1,13 +1,13 @@
-# output files
 mkp224o
+mkp224o.exe
 calcest
+calcest.exe
 test_*
 *.o
+*.obj
 
-# generated onions
 *.onion
 
-# garbage
 configure
 configure~
 GNUmakefile
@@ -15,3 +15,4 @@ GNUmakefile.in.bak
 config.status
 config.log
 *.cache
+*.ptx

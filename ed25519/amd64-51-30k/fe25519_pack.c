@@ -1,6 +1,5 @@
 #include "fe25519.h"
 
-/* Assumes input x being reduced below 2^255 */
 void fe25519_pack(unsigned char r[32], const fe25519 *x)
 {
   fe25519 t;

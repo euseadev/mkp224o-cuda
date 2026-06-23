@@ -1,7 +1,6 @@
 #include "fe.h"
 
-// tmp MUST != out or in
-// in MAY == out
+
 void fe_batchinvert(fe *out,fe *in,fe *tmp,size_t num,size_t shift)
 {
   fe acc;

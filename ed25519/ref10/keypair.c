@@ -36,7 +36,6 @@ int crypto_sign_pubkey(unsigned char *pk,const unsigned char *sk)
   return 0;
 }
 
-
 int crypto_sign_keypair(unsigned char *pk,unsigned char *sk)
 {
   crypto_sign_seckey(sk);

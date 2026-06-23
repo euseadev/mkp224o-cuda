@@ -1,7 +1,6 @@
 #include "fe25519.h"
 
-// tmp MUST != out or in
-// in MAY == out
+
 void fe25519_batchinvert(fe25519 *out, const fe25519 *in, fe25519 *tmp, size_t num, size_t offset)
 {
   fe25519 acc;

@@ -12,7 +12,7 @@ void *CRYPTO_NAMESPACE(worker_batch_pass)(void *task)
 	ge_p3 ALIGN(16) ge_public;
 	char *sname;
 
-	// state to keep batch data
+	
 	ge_p3   ALIGN(16) ge_batch [BATCHNUM];
 	fe      ALIGN(16) tmp_batch[BATCHNUM];
 	bytes32 ALIGN(16) pk_batch [BATCHNUM];
@@ -32,9 +32,9 @@ void *CRYPTO_NAMESPACE(worker_batch_pass)(void *task)
 	wpk[PUBLIC_LEN] = 0;
 	memset(&pubonion,0,sizeof(pubonion));
 	memcpy(pubonion.raw,pkprefix,PKPREFIX_SIZE);
-	// write version later as it will be overwritten by hash
+	
 	memcpy(hashsrc,checksumstr,checksumstrlen);
-	hashsrc[checksumstrlen + PUBLIC_LEN] = 0x03; // version
+	hashsrc[checksumstrlen + PUBLIC_LEN] = 0x03; 
 
 	sname = makesname();
 
@@ -65,13 +65,12 @@ initseed:
 		if (unlikely(endwork))
 			goto end;
 
-
 		for (size_t b = 0;b < BATCHNUM;++b) {
 			ge_batch[b] = ge_public;
 			ge_add(&sum,&ge_public,&ge_eightpoint);
 			ge_p1p1_to_p3(&ge_public,&sum);
 		}
-		// NOTE: leaves unfinished one bit at the very end
+		
 		ge_p3_batchtobytes_destructive_1(pk_batch,ge_batch,tmp_batch,BATCHNUM);
 
 #ifdef STATISTICS
@@ -92,32 +91,32 @@ initseed:
 						shiftpk(wpk,wpk,filter_len(j));
 					}
 				}
-				// found!
-				// finish it up
+				
+				
 				ge_p3_batchtobytes_destructive_finish(pk_batch[b],&ge_batch[b]);
-				// copy public key
+				
 				memcpy(pk,pk_batch[b],PUBLIC_LEN);
-				// update secret key with counter
+				
 				addsztoscalar32(sk,counter + (b * 8) - oldcounter);
 				oldcounter = counter + (b * 8);
-				// sanity check
+				
 				if ((sk[0] & 248) != sk[0] || ((sk[31] & 63) | 64) != sk[31])
 					goto initseed;
 
-				// reseed right half of key to avoid reuse, it won't change public key anyway
+				
 				reseedright(sk);
 
 				ADDNUMSUCCESS;
 
-				// calc checksum
+				
 				memcpy(&hashsrc[checksumstrlen],pk,PUBLIC_LEN);
 				FIPS202_SHA3_256(hashsrc,sizeof(hashsrc),&pk[PUBLIC_LEN]);
-				// version byte
+				
 				pk[PUBLIC_LEN + 2] = 0x03;
-				// full name
+				
 				strcpy(base32_to(&sname[direndpos],pk,PUBONION_LEN),".onion");
 				onionready(sname,secret,pubonion.raw,seednear && pw_warnnear);
-				pk[PUBLIC_LEN] = 0; // what is this for?
+				pk[PUBLIC_LEN] = 0; 
 
 				if (pw_skipnear)
 					goto initseed;
@@ -127,8 +126,8 @@ initseed:
 			;
 		}
 	}
-	// continue if have leftovers, DETERMINISTIC_LOOP_COUNT - counter < BATCHNUM * 8
-	// can't have leftovers in theory if BATCHNUM was power of 2 and smaller than DETERMINISTIC_LOOP_COUNT bound
+	
+	
 #if (BATCHNUM & (BATCHNUM - 1)) || (BATCHNUM * 8) > DETERMINISTIC_LOOP_COUNT
 	if (counter < DETERMINISTIC_LOOP_COUNT) {
 		ge_p1p1 ALIGN(16) sum;
@@ -143,7 +142,7 @@ initseed:
 			ge_add(&sum,&ge_public,&ge_eightpoint);
 			ge_p1p1_to_p3(&ge_public,&sum);
 		}
-		// NOTE: leaves unfinished one bit at the very end
+		
 		ge_p3_batchtobytes_destructive_1(pk_batch,ge_batch,tmp_batch,remaining);
 
 #ifdef STATISTICS
@@ -164,32 +163,32 @@ initseed:
 						shiftpk(wpk,wpk,filter_len(j));
 					}
 				}
-				// found!
-				// finish it up
+				
+				
 				ge_p3_batchtobytes_destructive_finish(pk_batch[b],&ge_batch[b]);
-				// copy public key
+				
 				memcpy(pk,pk_batch[b],PUBLIC_LEN);
-				// update secret key with counter
+				
 				addsztoscalar32(sk,counter + (b * 8) - oldcounter);
 				oldcounter = counter + (b * 8);
-				// sanity check
+				
 				if ((sk[0] & 248) != sk[0] || ((sk[31] & 63) | 64) != sk[31])
 					goto initseed;
 
-				// reseed right half of key to avoid reuse, it won't change public key anyway
+				
 				reseedright(sk);
 
 				ADDNUMSUCCESS;
 
-				// calc checksum
+				
 				memcpy(&hashsrc[checksumstrlen],pk,PUBLIC_LEN);
 				FIPS202_SHA3_256(hashsrc,sizeof(hashsrc),&pk[PUBLIC_LEN]);
-				// version byte
+				
 				pk[PUBLIC_LEN + 2] = 0x03;
-				// full name
+				
 				strcpy(base32_to(&sname[direndpos],pk,PUBONION_LEN),".onion");
 				onionready(sname,secret,pubonion.raw,seednear && pw_warnnear);
-				pk[PUBLIC_LEN] = 0; // what is this for?
+				pk[PUBLIC_LEN] = 0; 
 
 				if (pw_skipnear)
 					goto initseed;
@@ -199,7 +198,7 @@ initseed:
 			;
 		}
 	}
-#endif // (BATCHNUM & (BATCHNUM - 1)) || (BATCHNUM * 8) > DETERMINISTIC_LOOP_COUNT
+#endif 
 	goto initseed;
 
 end:
@@ -212,4 +211,4 @@ end:
 
 	return 0;
 }
-#endif // PASSPHRASE
+#endif 

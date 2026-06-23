@@ -1,8 +1,5 @@
 #include "ge.h"
 
-/*
-r = p
-*/
 
 extern void ge_p1p1_to_p3(ge_p3 *r,const ge_p1p1 *p)
 {

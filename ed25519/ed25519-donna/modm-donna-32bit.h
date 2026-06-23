@@ -1,18 +1,6 @@
-/*
-	Public domain by Andrew M. <liquidsun@gmail.com>
-*/
 
-/* separate uint128 check for 64 bit sse2 */
 #if !defined(HAVE_UINT128) || defined(ED25519_FORCE_32BIT)
 
-/*
-	Arithmetic modulo the group order n = 2^252 +  27742317777372353535851937790883648493 = 7237005577332262213973186563042994240857116359379907606001950938285454250989
-
-	k = 32
-	b = 1 << 8 = 256
-	m = 2^252 + 27742317777372353535851937790883648493 = 0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed
-	mu = floor( b^(k*2) / m ) = 0xfffffffffffffffffffffffffffffffeb2106215d086329a7ed9ce5a30a2c131b
-*/
 
 #define bignum256modm_bits_per_limb 30
 #define bignum256modm_limb_size 9
@@ -37,13 +25,12 @@ lt_modm(bignum256modm_element_t a, bignum256modm_element_t b) {
 	return (a - b) >> 31;
 }
 
-/* see HAC, Alg. 14.42 Step 4 */
 static void
 reduce256_modm(bignum256modm r) {
 	bignum256modm t;
 	bignum256modm_element_t b = 0, pb, mask;
 
-	/* t = r - m */
+	
 	pb = 0;
 	pb += modm_m[0]; b = lt_modm(r[0], pb); t[0] = (r[0] - pb + (b << 30)); pb = b;
 	pb += modm_m[1]; b = lt_modm(r[1], pb); t[1] = (r[1] - pb + (b << 30)); pb = b;
@@ -55,7 +42,7 @@ reduce256_modm(bignum256modm r) {
 	pb += modm_m[7]; b = lt_modm(r[7], pb); t[7] = (r[7] - pb + (b << 30)); pb = b;
 	pb += modm_m[8]; b = lt_modm(r[8], pb); t[8] = (r[8] - pb + (b << 16));
 
-	/* keep r if r was smaller than m */
+	
 	mask = b - 1;
 	r[0] ^= mask & (r[0] ^ t[0]);
 	r[1] ^= mask & (r[1] ^ t[1]);
@@ -68,20 +55,13 @@ reduce256_modm(bignum256modm r) {
 	r[8] ^= mask & (r[8] ^ t[8]);
 }
 
-/*
-	Barrett reduction,  see HAC, Alg. 14.42
-
-	Instead of passing in x, pre-process in to q1 and r1 for efficiency
-*/
 static void
 barrett_reduce256_modm(bignum256modm r, const bignum256modm q1, const bignum256modm r1) {
 	bignum256modm q3, r2;
 	uint64_t c;
 	bignum256modm_element_t f, b, pb;
 
-	/* q1 = x >> 248 = 264 bits = 9 30 bit elements
-	   q2 = mu * q1
-	   q3 = (q2 / 256(32+1)) = q2 / (2^8)^(32+1) = q2 >> 264 */
+	
 	c  = mul32x32_64(modm_mu[0], q1[7]) + mul32x32_64(modm_mu[1], q1[6]) + mul32x32_64(modm_mu[2], q1[5]) + mul32x32_64(modm_mu[3], q1[4]) + mul32x32_64(modm_mu[4], q1[3]) + mul32x32_64(modm_mu[5], q1[2]) + mul32x32_64(modm_mu[6], q1[1]) + mul32x32_64(modm_mu[7], q1[0]); 
 	c >>= 30;
 	c += mul32x32_64(modm_mu[0], q1[8]) + mul32x32_64(modm_mu[1], q1[7]) + mul32x32_64(modm_mu[2], q1[6]) + mul32x32_64(modm_mu[3], q1[5]) + mul32x32_64(modm_mu[4], q1[4]) + mul32x32_64(modm_mu[5], q1[3]) + mul32x32_64(modm_mu[6], q1[2]) + mul32x32_64(modm_mu[7], q1[1]) + mul32x32_64(modm_mu[8], q1[0]);
@@ -103,8 +83,7 @@ barrett_reduce256_modm(bignum256modm r, const bignum256modm q1, const bignum256m
 	c += mul32x32_64(modm_mu[8], q1[8]);
 	f = (bignum256modm_element_t)c; q3[7] |= (f << 6) & 0x3fffffff; q3[8] = (bignum256modm_element_t)(c >> 24);
 
-	/* r1 = (x mod 256^(32+1)) = x mod (2^8)(31+1) = x & ((1 << 264) - 1)
-	   r2 = (q3 * m) mod (256^(32+1)) = (q3 * m) & ((1 << 264) - 1) */
+	
 	c = mul32x32_64(modm_m[0], q3[0]);
 	r2[0] = (bignum256modm_element_t)(c & 0x3fffffff); c >>= 30;
 	c += mul32x32_64(modm_m[0], q3[1]) + mul32x32_64(modm_m[1], q3[0]);
@@ -124,8 +103,7 @@ barrett_reduce256_modm(bignum256modm r, const bignum256modm q1, const bignum256m
 	c += mul32x32_64(modm_m[0], q3[8]) + mul32x32_64(modm_m[1], q3[7]) + mul32x32_64(modm_m[2], q3[6]) + mul32x32_64(modm_m[3], q3[5]) + mul32x32_64(modm_m[4], q3[4]) + mul32x32_64(modm_m[5], q3[3]) + mul32x32_64(modm_m[6], q3[2]) + mul32x32_64(modm_m[7], q3[1]) + mul32x32_64(modm_m[8], q3[0]);
 	r2[8] = (bignum256modm_element_t)(c & 0xffffff);
 
-	/* r = r1 - r2
-	   if (r < 0) r += (1 << 264) */
+	
 	pb = 0;
 	pb += r2[0]; b = lt_modm(r1[0], pb); r[0] = (r1[0] - pb + (b << 30)); pb = b;
 	pb += r2[1]; b = lt_modm(r1[1], pb); r[1] = (r1[1] - pb + (b << 30)); pb = b;
@@ -141,7 +119,6 @@ barrett_reduce256_modm(bignum256modm r, const bignum256modm q1, const bignum256m
 	reduce256_modm(r);
 }
 
-/* addition modulo m */
 static void
 add256_modm(bignum256modm r, const bignum256modm x, const bignum256modm y) {
 	bignum256modm_element_t c;
@@ -159,15 +136,13 @@ add256_modm(bignum256modm r, const bignum256modm x, const bignum256modm y) {
 	reduce256_modm(r);
 }
 
-/* multiplication modulo m */
 static void 
 mul256_modm(bignum256modm r, const bignum256modm x, const bignum256modm y) {
 	bignum256modm r1, q1;
 	uint64_t c;
 	bignum256modm_element_t f;
 
-	/* r1 = (x mod 256^(32+1)) = x mod (2^8)(31+1) = x & ((1 << 264) - 1)
-	   q1 = x >> 248 = 264 bits = 9 30 bit elements */
+	
 	c = mul32x32_64(x[0], y[0]);
 	f = (bignum256modm_element_t)c; r1[0] = (f & 0x3fffffff); c >>= 30;
 	c += mul32x32_64(x[0], y[1]) + mul32x32_64(x[1], y[0]);
@@ -230,7 +205,7 @@ expand256_modm(bignum256modm out, const unsigned char *in, size_t len) {
 	x[14] = U8TO32_LE(work + 56);
 	x[15] = U8TO32_LE(work + 60);
 
-	/* r1 = (x mod 256^(32+1)) = x mod (2^8)(31+1) = x & ((1 << 264) - 1) */
+	
 	out[0] = (                         x[0]) & 0x3fffffff;
 	out[1] = ((x[ 0] >> 30) | (x[ 1] <<  2)) & 0x3fffffff;
 	out[2] = ((x[ 1] >> 28) | (x[ 2] <<  4)) & 0x3fffffff;
@@ -241,11 +216,11 @@ expand256_modm(bignum256modm out, const unsigned char *in, size_t len) {
 	out[7] = ((x[ 6] >> 18) | (x[ 7] << 14)) & 0x3fffffff;
 	out[8] = ((x[ 7] >> 16) | (x[ 8] << 16)) & 0x00ffffff;
 
-	/* 8*31 = 248 bits, no need to reduce */
+	
 	if (len < 32)
 		return;
 
-	/* q1 = x >> 248 = 264 bits = 9 30 bit elements */
+	
 	q1[0] = ((x[ 7] >> 24) | (x[ 8] <<  8)) & 0x3fffffff;
 	q1[1] = ((x[ 8] >> 22) | (x[ 9] << 10)) & 0x3fffffff;
 	q1[2] = ((x[ 9] >> 20) | (x[10] << 12)) & 0x3fffffff;
@@ -296,7 +271,6 @@ contract256_modm(unsigned char out[32], const bignum256modm in) {
 }
 
 
-
 static void
 contract256_window4_modm(signed char r[64], const bignum256modm in) {
 	char carry;
@@ -321,7 +295,7 @@ contract256_window4_modm(signed char r[64], const bignum256modm in) {
 	*quads++ = (v & 15); v >>= 4;
 	*quads++ = (v & 15); v >>= 4;
 
-	/* making it signed */
+	
 	carry = 0;
 	for(i = 0; i < 63; i++) {
 		r[i] += carry;
@@ -340,7 +314,7 @@ contract256_slidingwindow_modm(signed char r[256], const bignum256modm s, int wi
 	signed char *bits = r;
 	bignum256modm_element_t v;
 
-	/* first put the binary expansion into r  */
+	
 	for (i = 0; i < 8; i++) {
 		v = s[i];
 		for (j = 0; j < 30; j++, v >>= 1)
@@ -350,7 +324,7 @@ contract256_slidingwindow_modm(signed char r[256], const bignum256modm s, int wi
 	for (j = 0; j < 16; j++, v >>= 1)
 		*bits++ = (v & 1);
 
-	/* Making it sliding window */
+	
 	for (j = 0; j < soplen; j++) {
 		if (!r[j])
 			continue;
@@ -376,11 +350,7 @@ contract256_slidingwindow_modm(signed char r[256], const bignum256modm s, int wi
 }
 
 
-/*
-	helpers for batch verifcation, are allowed to be vartime
-*/
 
-/* out = a - b, a must be larger than b */
 static void
 sub256_modm_batch(bignum256modm out, const bignum256modm a, const bignum256modm b, size_t limbsize) {
 	size_t i = 0;
@@ -400,7 +370,6 @@ sub256_modm_batch(bignum256modm out, const bignum256modm a, const bignum256modm 
 }
 
 
-/* is a < b */
 static int
 lt256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize) {
 	switch (limbsize) {
@@ -417,7 +386,6 @@ lt256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize) 
 	return 0;
 }
 
-/* is a <= b */
 static int
 lte256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize) {
 	switch (limbsize) {
@@ -435,7 +403,6 @@ lte256_modm_batch(const bignum256modm a, const bignum256modm b, size_t limbsize)
 }
 
 
-/* is a == 0 */
 static int
 iszero256_modm_batch(const bignum256modm a) {
 	size_t i;
@@ -445,7 +412,6 @@ iszero256_modm_batch(const bignum256modm a) {
 	return 1;
 }
 
-/* is a == 1 */
 static int
 isone256_modm_batch(const bignum256modm a) {
 	size_t i;
@@ -457,17 +423,16 @@ isone256_modm_batch(const bignum256modm a) {
 	return 1;
 }
 
-/* can a fit in to (at most) 128 bits */
 static int
 isatmost128bits256_modm_batch(const bignum256modm a) {
 	uint32_t mask =
-		((a[8]             )  | /*  16 */
-		 (a[7]             )  | /*  46 */
-		 (a[6]             )  | /*  76 */
-		 (a[5]             )  | /* 106 */
-		 (a[4] & 0x3fffff00));  /* 128 */
+		((a[8]             )  | 
+		 (a[7]             )  | 
+		 (a[6]             )  | 
+		 (a[5]             )  | 
+		 (a[4] & 0x3fffff00));  
 
 	return (mask == 0);
 }
 
-#endif /* !defined(HAVE_UINT128) || defined(ED25519_FORCE_32BIT) */
+#endif 

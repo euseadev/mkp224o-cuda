@@ -38,7 +38,7 @@ static const char keys_field_time[]      = "time: ";
 #define B64_SECKEY_LEN (BASE64_TO_LEN(FORMATTED_SECRET_LEN))
 #define B64_RAW_PUBKEY_LEN (BASE64_TO_LEN(PUBLIC_LEN))
 #define B64_RAW_SECKEY_LEN (BASE64_TO_LEN(SECRET_LEN))
-#define TIME_LEN       21 // strlen("2018-07-04 21:31:20 Z")
+#define TIME_LEN       21 
 
 #define KEYS_LEN ( \
 	KEYS_FIELD_GENERATED_LEN                  + LINEFEED_LEN + \
@@ -80,15 +80,12 @@ void yamlout_writekeys(
 	char timebuf[TIME_LEN + NULLTERM_LEN];
 	size_t offset = 0;
 
-
 	BUF_APPEND(keysbuf,offset,keys_field_generated,KEYS_FIELD_GENERATED_LEN);
 	BUF_APPEND_CHAR(keysbuf,offset,'\n');
-
 
 	BUF_APPEND(keysbuf,offset,keys_field_hostname,KEYS_FIELD_HOSTNAME_LEN);
 	BUF_APPEND(keysbuf,offset,hostname,ONION_LEN);
 	BUF_APPEND_CHAR(keysbuf,offset,'\n');
-
 
 	BUF_APPEND(keysbuf,offset,keys_field_publickey,KEYS_FIELD_PUBLICKEY_LEN);
 
@@ -100,7 +97,6 @@ void yamlout_writekeys(
 	BUF_APPEND_CSTR(keysbuf,offset,pubkeybuf);
 	BUF_APPEND_CHAR(keysbuf,offset,'\n');
 
-
 	BUF_APPEND(keysbuf,offset,keys_field_secretkey,KEYS_FIELD_SECRETKEY_LEN);
 
 	if (!rawkeys)
@@ -110,7 +106,6 @@ void yamlout_writekeys(
 
 	BUF_APPEND_CSTR(keysbuf,offset,seckeybuf);
 	BUF_APPEND_CHAR(keysbuf,offset,'\n');
-
 
 	BUF_APPEND(keysbuf,offset,keys_field_time,KEYS_FIELD_TIME_LEN);
 
@@ -126,9 +121,7 @@ void yamlout_writekeys(
 	BUF_APPEND(keysbuf,offset,timebuf,TIME_LEN);
 	BUF_APPEND_CHAR(keysbuf,offset,'\n');
 
-
 	assert(offset == (!rawkeys ? KEYS_LEN : RAW_KEYS_LEN));
-
 
 	pthread_mutex_lock(&fout_mutex);
 	fwrite(keysbuf,offset,1,fout);
@@ -140,7 +133,6 @@ void yamlout_writekeys(
 #undef BUF_APPEND_CSTR
 #undef BUF_APPEND
 
-// pseudo YAML parser
 int yamlin_parseandcreate(
 	FILE *fin,char *sname,const char *onehostname,int rawkeys)
 {
@@ -162,16 +154,16 @@ int yamlin_parseandcreate(
 
 		len = strlen(line);
 
-		// trim whitespace from the end
+		
 		while (len != 0 && (line[len-1] == ' ' || line[len-1] == '\n' || line[len-1] == '\r'))
 			line[--len] = '\0';
 
-		// skip empty lines
+		
 		if (len == 0)
 			continue;
 
 		if (len >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
-			// end of document / start of new document indicator
+			
 			if (!skipthis && (hashost || haspub || hassec)) {
 				fprintf(stderr,"ERROR: incomplete record\n");
 				return 1;
@@ -184,12 +176,12 @@ int yamlin_parseandcreate(
 			continue;
 
 		char *start = line;
-		// trim whitespace
+		
 		while (len != 0 && *start == ' ') {
 			++start;
 			--len;
 		}
-		// find ':'
+		
 		char *p = start;
 		for (;*p != '\0';++p) {
 			if (*p == ':') {
@@ -197,9 +189,9 @@ int yamlin_parseandcreate(
 				goto foundkey;
 			}
 		}
-		// not `key: value`
+		
 		fprintf(stderr,"ERROR: invalid syntax\n");
-		return 1; // XXX could continue too there but eh
+		return 1; 
 
 	foundkey:
 
@@ -210,16 +202,16 @@ int yamlin_parseandcreate(
 		else if (!strcmp(start,"hs_ed25519_secret_key"))
 			keyt = SEC;
 		else
-			continue; // uninterested
+			continue; 
 
-		// skip WS
+		
 		while (*p == ' ')
 			++p;
 		if (*p == '!') {
-			// skip ! tag
+			
 			while (*p != '\0' && *p != ' ')
 				++p;
-			// skip WS
+			
 			while (*p == ' ')
 				++p;
 		}
@@ -299,8 +291,8 @@ int yamlin_parseandcreate(
 			sigprocmask(SIG_SETMASK,&oset,0);
 #endif
 			if (onehostname)
-				return 0; // finished
-			// skip rest of lines until we hit start of new doc indicator
+				return 0; 
+			
 			skipthis = 1;
 		}
 	}

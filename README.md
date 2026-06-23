@@ -1,143 +1,91 @@
-## mkp224o - vanity address generator for ed25519 onion services
+# mkp224o-cuda
 
-This tool generates vanity ed25519 (hidden service version 3[^1][^2],
-formely known as proposal 224) onion addresses.
+GPU-accelerated vanity address generator for Tor v3 (ed25519) onion services — a CUDA fork of [cathugger/mkp224o](https://github.com/cathugger/mkp224o).
 
-### Requirements for building
+Adds an optional `--cuda` GPU worker that runs the same batch key-derivation loop as the CPU mode but on NVIDIA GPUs. Without `--cuda`, behaviour is identical to upstream.
 
-* C99 compatible compiler (gcc and clang should work)
-* libsodium (including headers)
-* GNU make
-* GNU autoconf (to generate configure script, needed only if not using release tarball)
-* UNIX-like platform (currently tested in Linux and OpenBSD, but should
-  also build under cygwin and msys2).
+## Requirements
 
-For debian-like linux distros, this should be enough to prepare for building:
+- C99 compiler, GNU make, autoconf
+- **libsodium** (headers + library)
+- **CUDA toolkit** (`nvcc` in PATH) — optional, only when building with `--enable-cuda`
+- POSIX platform (Linux, OpenBSD, msys2/cygwin)
 
+**Debian/Ubuntu:**
 ```bash
 apt install gcc libc6-dev libsodium-dev make autoconf
 ```
 
-### Building
+## Build
 
-Run `./autogen.sh` to generate a configure script, if there isn't one already.
+```bash
+./autogen.sh
+./configure --enable-amd64-51-30k --enable-cuda
+make
+```
 
-Run `./configure` to generate a makefile.
-On \*BSD platforms you may need to specify extra include/library paths:
-`./configure CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib"`.
+For fastest CPU performance add `--enable-amd64-51-30k` on x86_64 (see `OPTIMISATION.txt`).  
+**Windows/MSYS2:** nvcc defaults to MSVC as host compiler — pass mingw gcc explicitly:
+```bash
+./configure NVCC='nvcc -ccbin /mingw64/bin/gcc' --enable-cuda
+make
+```
 
-On AMD64 platforms, you probably also want to pass something like
-`--enable-amd64-51-30k` to the configure script invocation for faster key generation;
-run `./configure --help` to see all available options.
+Tunable CUDA options (`./configure --help` for full list):
+- `--enable-cuda-batchnum=N` — keys per GPU-thread batch (default 64)
+- `--enable-cuda-tpb=N` — threads per block (default 64)
+- `--enable-cuda-arch=ARCH` — nvcc `-arch` flag (default `native`)
 
-Finally, `make` to start building (`gmake` in \*BSD platforms).
+## Usage
 
-### Usage
+```
+mkp224o --cuda [-d outputdir] [-n numkeys] [-s] filter
+```
 
-mkp224o needs one or more filters to work.
-You may specify them as command line arguments,
-eg `./mkp224o test`, or load them from file with `-f` switch.
+GPU mode (`--cuda`):
+```bash
+./mkp224o --cuda -s -d keys openarch
+```
 
-It makes directories with secret/public keys and hostnames
-for each discovered service. By default, the working directory is the current
-directory, but that can be overridden with `-d` switch.
+CPU mode (identical to upstream):
+```bash
+./mkp224o -d keys openarch
+```
 
-Use `-s` switch to enable printing of statistics, which may be useful
-when benchmarking different ed25519 implementations on your machine.
+## GPU vs CPU
 
-Use `-h` switch to obtain all available options.
+| | GPU `--cuda` | CPU |
+|---|---|---|
+| Key derivation | CUDA kernel (cuRAND) | pthread workers (libsodium random) |
+| ed25519 | Ported donna 5x51-bit (cuda_ed25519.cuh) | Selected at configure time |
+| Throughput (RTX 5060 Ti) | ~160M keys/s | ~2M keys/s/core |
+| Passphrase `-p/-P` | Not supported | Supported |
+| Multi-word `-N>1` | Not supported | Supported |
+| Regex `--enable-regex` | Not supported | Supported |
 
-I highly recommend reading [OPTIMISATION.txt][OPTIMISATION] for
-performance-related tips.
+## Output
 
-### FAQ and other useful info
+Each discovered key creates a directory:
+```
+keys/
+  openarchxxxx...onion/
+    hostname
+    hs_ed25519_secret_key
+    hs_ed25519_public_key
+```
 
-* How do I generate address?
+Copy to Tor:
+```bash
+sudo cp -r openarchxxxx...onion /var/lib/tor/myservice
+sudo chown -R tor: /var/lib/tor/myservice
+```
 
-  Once compiled, run it like `./mkp224o neko`, and it will try creating
-  keys for onions starting with "neko" in this example; use `./mkp224o
-  -d nekokeys neko` to not litter current directory and put all
-  discovered keys in directory named "nekokeys".
+Then add to `torrc` and reload Tor.
 
-* How do I make tor use generated keys?
+## Credits
 
-  Copy key folder (though technically only `hs_ed25519_secret_key` is required)
-  to where you want your service keys to reside:
+Fork of [cathugger/mkp224o](https://github.com/cathugger/mkp224o) — all original CPU logic, ed25519 implementations, and the batch-mode horse25519 trick remain intact.
 
-  ```bash
-  sudo cp -r neko54as6d54....onion /var/lib/tor/nekosvc
-  ```
+GPU ed25519 arithmetic ported from floodyberry's [ed25519-donna](https://github.com/floodyberry/ed25519-donna), reusing the exact upstream basepoint table.
 
-  You may need to adjust ownership and permissions:
-
-  ```bash
-  sudo chown -R tor: /var/lib/tor/nekosvc
-  sudo chmod -R u+rwX,og-rwx /var/lib/tor/nekosvc
-  ```
-
-  Then edit `torrc` and add new service with that folder.\
-  After reload/restart tor should pick it up.
-
-* How to generate addresses with `0-1` and `8-9` digits?
-
-  Onion addresses use base32 encoding which does not include `0,1,8,9`
-  numbers.\
-  So no, that's not possible to generate these, and mkp224o tries to
-  detect invalid filters containing them early on.
-
-* How long is it going to take?
-
-  Because of probablistic nature of brute force key generation, and
-  varience of hardware it's going to run on, it's hard to make promisses
-  about how long it's going to take, especially when the most of users
-  want just a few keys.\
-  See [this issue][#27] for very valuable discussion about this.\
-  If your machine is powerful enough, 6 character prefix shouldn't take
-  more than few tens of minutes, if using batch mode (read
-  [OPTIMISATION.txt][OPTIMISATION]) 7 characters can take hours
-  to days.\
-  No promisses though, it depends on pure luck.
-
-* Will this work with onionbalance?
-
-  It appears that onionbalance supports loading usual
-  `hs_ed25519_secret_key` key so it should work.
-
-* Is there a docker image?
-
-  Yes, if you do not wish to compile mkp224o yourself, you can use
-  the `ghcr.io/cathugger/mkp224o` image like so:
-
-  ```bash
-  docker run --rm -it -v $PWD:/keys ghcr.io/cathugger/mkp224o:master -d /keys neko
-  ```
-
-### Acknowledgements & Legal
-
-To the extent possible under law, the author(s) have dedicated all
-copyright and related and neighboring rights to this software to the
-public domain worldwide. This software is distributed without any
-warranty.
-You should have received a copy of the CC0 Public Domain Dedication
-along with this software. If not, see [CC0][].
-
-* `keccak.c` is based on [Keccak-more-compact.c][keccak.c]
-* `ed25519/{ref10,amd64-51-30k,amd64-64-24k}` are adopted from
-  [SUPERCOP][]
-* `ed25519/ed25519-donna` adopted from [ed25519-donna][]
-* Idea used in `worker_fast()` is stolen from [horse25519][]
-* base64 routines and initial YAML processing work contributed by
-  Alexander Khristoforov (heios at protonmail dot com)
-* Passphrase-based generation code and idea used in `worker_batch()`
-  contributed by [foobar2019][]
-
-[OPTIMISATION]: ./OPTIMISATION.txt
-[#27]: https://github.com/cathugger/mkp224o/issues/27
-[keccak.c]: https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/C/Keccak-more-compact.c
-[CC0]: https://creativecommons.org/publicdomain/zero/1.0/
-[SUPERCOP]: https://bench.cr.yp.to/supercop.html
-[ed25519-donna]: https://github.com/floodyberry/ed25519-donna
-[horse25519]: https://github.com/Yawning/horse25519
-[foobar2019]: https://github.com/foobar2019
-[^1]: https://spec.torproject.org/rend-spec/index.html
-[^2]: https://gitlab.torproject.org/tpo/core/torspec/-/raw/main/attic/text_formats/rend-spec-v3.txt
+Public domain (CC0). See `COPYING.txt`.

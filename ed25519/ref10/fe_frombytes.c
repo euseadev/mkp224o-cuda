@@ -21,9 +21,6 @@ static crypto_uint64 load_4(const unsigned char *in)
   return result;
 }
 
-/*
-Ignores top bit of h.
-*/
 
 void fe_frombytes(fe h,const unsigned char *s)
 {

@@ -24,7 +24,6 @@
 #define ge25519_nielsadd_p1p1             CRYPTO_NAMESPACE(ge25519_nielsadd_p1p1)
 #define ge25519_pnielsadd_p1p1            CRYPTO_NAMESPACE(ge25519_pnielsadd_p1p1)
 
-
 #define ge25519_p3 ge25519
 
 typedef struct
@@ -91,7 +90,6 @@ extern void ge25519_add(ge25519 *r, const ge25519 *p, const ge25519 *q);
 
 extern void ge25519_double(ge25519 *r, const ge25519 *p);
 
-/* computes [s1]p1 + [s2]ge25519_base */
 extern void ge25519_double_scalarmult_vartime(ge25519 *r, const ge25519 *p1, const sc25519 *s1, const sc25519 *s2);
 
 extern void ge25519_multi_scalarmult_vartime(ge25519 *r, ge25519 *p, sc25519 *s, const unsigned long long npoints);

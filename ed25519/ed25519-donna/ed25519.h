@@ -27,4 +27,4 @@ void curved25519_scalarmult_basepoint(curved25519_key pk, const curved25519_key 
 }
 #endif
 
-#endif // ED25519_H
+#endif 

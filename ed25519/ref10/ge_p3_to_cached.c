@@ -1,8 +1,5 @@
 #include "ge.h"
 
-/*
-r = p
-*/
 
 static const fe d2 = {
 #include "d2.h"

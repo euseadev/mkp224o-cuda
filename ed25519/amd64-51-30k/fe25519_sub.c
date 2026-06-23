@@ -3,7 +3,7 @@
 void fe25519_sub(fe25519 *r, const fe25519 *x, const fe25519 *y)
 {
   fe25519 yt = *y;
-  /* Not required for reduced input */
+  
   
   unsigned long long t;
   t = yt.v[0] >> 51;

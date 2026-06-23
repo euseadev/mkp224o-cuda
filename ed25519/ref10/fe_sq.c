@@ -1,20 +1,7 @@
 #include "fe.h"
 #include "crypto_int64.h"
 
-/*
-h = f * f
-Can overlap h with f.
 
-Preconditions:
-   |f| bounded by 1.65*2^26,1.65*2^25,1.65*2^26,1.65*2^25,etc.
-
-Postconditions:
-   |h| bounded by 1.01*2^25,1.01*2^24,1.01*2^25,1.01*2^24,etc.
-*/
-
-/*
-See fe_mul.c for discussion of implementation strategy.
-*/
 
 void fe_sq(fe h,const fe f)
 {
@@ -36,11 +23,11 @@ void fe_sq(fe h,const fe f)
   crypto_int32 f5_2 = 2 * f5;
   crypto_int32 f6_2 = 2 * f6;
   crypto_int32 f7_2 = 2 * f7;
-  crypto_int32 f5_38 = 38 * f5; /* 1.959375*2^30 */
-  crypto_int32 f6_19 = 19 * f6; /* 1.959375*2^30 */
-  crypto_int32 f7_38 = 38 * f7; /* 1.959375*2^30 */
-  crypto_int32 f8_19 = 19 * f8; /* 1.959375*2^30 */
-  crypto_int32 f9_38 = 38 * f9; /* 1.959375*2^30 */
+  crypto_int32 f5_38 = 38 * f5; 
+  crypto_int32 f6_19 = 19 * f6; 
+  crypto_int32 f7_38 = 38 * f7; 
+  crypto_int32 f8_19 = 19 * f8; 
+  crypto_int32 f9_38 = 38 * f9; 
   crypto_int64 f0f0    = f0   * (crypto_int64) f0;
   crypto_int64 f0f1_2  = f0_2 * (crypto_int64) f1;
   crypto_int64 f0f2_2  = f0_2 * (crypto_int64) f2;

@@ -15,7 +15,7 @@ static IFT ifilter_bitsum(IFT x)
 	return (((IFT) 1) << __builtin_popcount((unsigned int) x)) - 1;
 }
 
-#else // __GNUC__
+#else 
 
 static IFT ifilter_bitsum(IFT x)
 {
@@ -27,6 +27,6 @@ static IFT ifilter_bitsum(IFT x)
 	return (((IFT) 1) << v) - 1;
 }
 
-#endif // __GNUC__
+#endif 
 
-#endif // EXPANDMASK
+#endif 

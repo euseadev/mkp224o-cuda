@@ -1,13 +1,6 @@
 #ifndef GE25519_H
 #define GE25519_H
 
-/*
- * Arithmetic on the twisted Edwards curve -x^2 + y^2 = 1 + dx^2y^2
- * with d = -(121665/121666) =
- * 37095705934669439343138083508754565189542113879843219016388785533085940283555
- * Base point:
- * (15112221349535400772501151409588531511454012693041857206046113283949847762202,46316835694926478169428394003475163141307993866256225615783033603165251855960);
- */
 
 #include "fe25519.h"
 #include "sc25519.h"
@@ -100,7 +93,6 @@ extern void ge25519_add(ge25519 *r, const ge25519 *p, const ge25519 *q);
 
 extern void ge25519_double(ge25519 *r, const ge25519 *p);
 
-/* computes [s1]p1 + [s2]ge25519_base */
 extern void ge25519_double_scalarmult_vartime(ge25519 *r, const ge25519 *p1, const sc25519 *s1, const sc25519 *s2);
 
 extern void ge25519_multi_scalarmult_vartime(ge25519 *r, ge25519 *p, sc25519 *s, const unsigned long long npoints);

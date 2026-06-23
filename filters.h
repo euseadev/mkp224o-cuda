@@ -20,14 +20,12 @@
 # define EXPANDMASK
 #endif
 
-// whether binfilter struct is needed
 #ifdef BINFILTER
 # define NEEDBINFILTER
 #endif
 #ifdef INTFILTER
 # define NEEDBINFILTER
 #endif
-
 
 #ifdef NEEDBINFILTER
 
@@ -37,7 +35,7 @@
 
 struct binfilter {
 	u8 f[BINFILTERLEN];
-	size_t len; // real len minus one
+	size_t len; 
 	u8 mask;
 } ;
 
@@ -47,8 +45,7 @@ VEC_STRUCT(bfiltervec,struct binfilter);
 extern struct bfiltervec filters;
 #endif
 
-#endif // NEEDBINFILTER
-
+#endif 
 
 
 #ifdef INTFILTER
@@ -68,8 +65,7 @@ extern struct ifiltervec filters;
 extern IFT ifiltermask;
 # endif
 
-#endif // INTFILTER
-
+#endif 
 
 
 #ifdef PCRE2FILTER
@@ -86,8 +82,7 @@ VEC_STRUCT(pfiltervec,struct pcre2filter);
 
 extern struct pfiltervec filters;
 
-#endif // PCRE2FILTER
-
+#endif 
 
 extern int flattened;
 

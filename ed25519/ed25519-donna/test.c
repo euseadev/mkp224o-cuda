@@ -1,7 +1,3 @@
-/*
-	Validate ed25519 implementation against the official test vectors from 
-	http://ed25519.cr.yp.to/software.html
-*/
 
 #include <stdio.h>
 #include <string.h>
@@ -45,18 +41,15 @@ edassert_equal_round(const unsigned char *a, const unsigned char *b, size_t len,
 }
 
 
-/* test data */
 typedef struct test_data_t {
 	unsigned char sk[32], pk[32], sig[64];
 	const char *m;
 } test_data;
 
-
 test_data dataset[] = {
 #include "regression.h"
 };
 
-/* result of the curve25519 scalarmult ((|255| * basepoint) * basepoint)... 1024 times */
 const curved25519_key curved25519_expected = {
 	0xac,0xce,0x24,0xb1,0xd4,0xa2,0x36,0x21,
 	0x15,0xe2,0x3e,0x84,0x3c,0x23,0x2b,0x5f,
@@ -65,10 +58,8 @@ const curved25519_key curved25519_expected = {
 };
 
 
-/* from ed25519-donna-batchverify.h */
 extern unsigned char batch_point_buffer[3][32];
 
-/* y coordinate of the final point from 'amd64-51-30k' with the same random generator */
 static const unsigned char batch_verify_y[32] = {
 	0x51,0xe7,0x68,0xe0,0xf7,0xa1,0x88,0x45,
 	0xde,0xa1,0xcb,0xd9,0x37,0xd4,0x78,0x53,
@@ -76,37 +67,9 @@ static const unsigned char batch_verify_y[32] = {
 	0x94,0x51,0x2f,0xbc,0x0d,0x66,0xba,0x3f
 };
 
-/*
-static const unsigned char batch_verify_y[32] = {
-	0x5c,0x63,0x96,0x26,0xca,0xfe,0xfd,0xc4,
-	0x2d,0x11,0xa8,0xe4,0xc4,0x46,0x42,0x97,
-	0x97,0x92,0xbe,0xe0,0x3c,0xef,0x96,0x01,
-	0x50,0xa1,0xcc,0x8f,0x50,0x85,0x76,0x7d
-};
-
-Introducing the 128 bit r scalars to the heap _before_ the largest scalar
-fits in to 128 bits alters the heap shape and produces a different,
-yet still neutral/valid y/z value.
-
-This was the value of introducing the r scalars when the largest scalar fit
-in to 135-256 bits. You can produce it with amd64-64-24k / amd64-51-32k
-with the random sequence used in the first pass by changing
-
-    unsigned long long hlen=((npoints+1)/2)|1;
-
-to
-
-    unsigned long long hlen=npoints;
-
-in ge25519_multi_scalarmult.c
-
-ed25519-donna-batchverify.h has been modified to match the 
-default amd64-64-24k / amd64-51-32k behaviour
-*/
 
 
 
-/* batch test */
 #define test_batch_count 64
 #define test_batch_rounds 96
 
@@ -131,21 +94,21 @@ test_batch_instance(batch_test type, uint64_t *ticks) {
 	size_t i;
 	uint64_t t;
 
-	/* generate keys */
+	
 	for (i = 0; i < test_batch_count; i++) {
 		ed25519_randombytes_unsafe(sks[i], sizeof(sks[i]));
 		ed25519_publickey(sks[i], pks[i]);
 		pk_pointers[i] = pks[i];
 	}
 
-	/* generate messages */
+	
 	ed25519_randombytes_unsafe(messages, sizeof(messages));
 	for (i = 0; i < test_batch_count; i++) {
 		message_pointers[i] = messages[i];
 		message_lengths[i] = (i & 127) + 1;
 	}
 
-	/* sign messages */
+	
 	for (i = 0; i < test_batch_count; i++) {
 		ed25519_sign(message_pointers[i], message_lengths[i], sks[i], pks[i], sigs[i]);
 		sig_pointers[i] = sigs[i];
@@ -163,7 +126,7 @@ test_batch_instance(batch_test type, uint64_t *ticks) {
 		validret = 1|2;
 	}
 
-	/* batch verify */
+	
 	t = get_ticks();
 	ret = ed25519_sign_open_batch(message_pointers, message_lengths, pk_pointers, sig_pointers, test_batch_count, valid);
 	*ticks = get_ticks() - t;
@@ -180,25 +143,25 @@ test_batch(void) {
 	uint64_t dummy_ticks, ticks[test_batch_rounds], best = maxticks, sum;
 	size_t i, count;
 
-	/* check the first pass for the expected result */
+	
 	test_batch_instance(batch_no_errors, &dummy_ticks);
 	edassert_equal(batch_verify_y, batch_point_buffer[1], 32, "failed to generate expected result");
 
-	/* make sure ge25519_multi_scalarmult_vartime throws an error on the entire batch with wrong data */
+	
 	for (i = 0; i < 4; i++) {
 		test_batch_instance(batch_wrong_message, &dummy_ticks);
 		test_batch_instance(batch_wrong_pk, &dummy_ticks);
 		test_batch_instance(batch_wrong_sig, &dummy_ticks);
 	}
 
-	/* speed test */
+	
 	for (i = 0; i < test_batch_rounds; i++) {
 		test_batch_instance(batch_no_errors, &ticks[i]);
 		if (ticks[i] < best)
 			best = ticks[i];
 	}
 
-	/* take anything within 1% of the best time */
+	
 	for (i = 0, sum = 0, count = 0; i < test_batch_rounds; i++) {
 		if (ticks[i] < (best * 1.01)) {
 			sum += ticks[i];

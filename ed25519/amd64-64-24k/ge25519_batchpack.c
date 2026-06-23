@@ -1,7 +1,6 @@
 #include "fe25519.h"
 #include "ge25519.h"
 
-// NOTE: leaves in unfinished state
 void ge25519_batchpack_destructive_1(bytes32 *out, ge25519_p3 *in, fe25519 *tmp, size_t num)
 {
   fe25519 ty;
@@ -17,7 +16,7 @@ void ge25519_batchpack_destructive_1(bytes32 *out, ge25519_p3 *in, fe25519 *tmp,
 void ge25519_batchpack_destructive_finish(bytes32 out, ge25519_p3 *unf)
 {
   fe25519 tx;
-  // z of unfinished is inverted
+  
   fe25519_mul(&tx, &unf->x, &unf->z);
   out[31] ^= fe25519_getparity(&tx) << 7;
 }

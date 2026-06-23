@@ -1,6 +1,5 @@
 #if defined(ED25519_REFHASH)
 
-/* reference/slow SHA-512. really, do not use this */
 
 #define HASH_BLOCK_SIZE 128
 #define HASH_DIGEST_SIZE 64
@@ -124,7 +123,7 @@ static void
 ed25519_hash_update(sha512_state *S, const uint8_t *in, size_t inlen) {
 	size_t blocks, want;
 
-	/* handle the previous data */
+	
 	if (S->leftover) {
 		want = (HASH_BLOCK_SIZE - S->leftover);
 		want = (want < inlen) ? want : inlen;
@@ -137,7 +136,7 @@ ed25519_hash_update(sha512_state *S, const uint8_t *in, size_t inlen) {
 		sha512_blocks(S, S->buffer, 1);
 	}
 
-	/* handle the current data */
+	
 	blocks = (inlen & ~(HASH_BLOCK_SIZE - 1));
 	S->leftover = (uint32_t)(inlen - blocks);
 	if (blocks) {
@@ -145,7 +144,7 @@ ed25519_hash_update(sha512_state *S, const uint8_t *in, size_t inlen) {
 		in += blocks;
 	}
 
-	/* handle leftover data */
+	
 	if (S->leftover)
 		memcpy(S->buffer, in, S->leftover);
 }

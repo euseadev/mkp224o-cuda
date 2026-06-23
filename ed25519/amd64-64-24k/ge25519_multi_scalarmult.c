@@ -13,9 +13,9 @@ static void setneutral(ge25519 *r)
 
 static void ge25519_scalarmult_vartime_2limbs(ge25519 *r, ge25519 *p, sc25519 *s)
 {
-  if (s->v[1] == 0 && s->v[0] == 1) /* This will happen most of the time after Bos-Coster */
+  if (s->v[1] == 0 && s->v[0] == 1) 
     *r = *p; 
-  else if (s->v[1] == 0 && s->v[0] == 0) /* This won't ever happen, except for all scalars == 0 in Bos-Coster */
+  else if (s->v[1] == 0 && s->v[0] == 0) 
     setneutral(r);
   else
   {
@@ -53,7 +53,6 @@ static void ge25519_scalarmult_vartime_2limbs(ge25519 *r, ge25519 *p, sc25519 *s
   }
 }
 
-/* caller's responsibility to ensure npoints >= 5 */
 void ge25519_multi_scalarmult_vartime(ge25519_p3 *r, ge25519_p3 *p, sc25519 *s, const unsigned long long npoints)
 {
   unsigned long long pos[npoints];
@@ -78,7 +77,7 @@ void ge25519_multi_scalarmult_vartime(ge25519_p3 *r, ge25519_p3 *p, sc25519 *s, 
     ge25519_add(&p[max2],&p[max2],&p[max1]);
     heap_rootreplaced_3limbs(pos, hlen, s);
   }
-  /* We know that (npoints-1)/2 scalars are only 128-bit scalars */
+  
   heap_extend(pos, hlen, npoints, s);
   hlen = npoints;
   for(;;i++)

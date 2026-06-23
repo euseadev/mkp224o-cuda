@@ -2,12 +2,10 @@
 #include "sc25519.h"
 #include "ge25519.h"
 
-/* Multiples of the base point in Niels' representation */
 static const ge25519_niels ge25519_base_multiples_niels[] = {
 #include "ge25519_base_niels_smalltables.data"
 };
 
-/* d */
 static const fe25519 ecd = {{929955233495203, 466365720129213, 1662059464998953, 2033849074728123, 1442794654840575}};
 
 void ge25519_scalarmult_base(ge25519_p3 *r, const sc25519 *s)

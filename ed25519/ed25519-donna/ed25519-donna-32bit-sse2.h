@@ -10,7 +10,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 	uint32_t u = (breg + mask) ^ mask;
 
 	__asm__ __volatile__ (
-		/* ysubx+xaddy */
+		
 		"movl %0, %%eax                  ;\n"
 		"movd %%eax, %%xmm6              ;\n"
 		"pshufd $0x00, %%xmm6, %%xmm6    ;\n"
@@ -19,7 +19,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"pxor %%xmm2, %%xmm2             ;\n"
 		"pxor %%xmm3, %%xmm3             ;\n"
 
-		/* 0 */
+		
 		"movl $0, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -34,7 +34,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 1 */
+		
 		"movl $1, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -52,7 +52,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 2 */
+		
 		"movl $2, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -70,7 +70,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 3 */
+		
 		"movl $3, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -88,7 +88,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 4 */
+		
 		"movl $4, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -106,7 +106,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 5 */
+		
 		"movl $5, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -124,7 +124,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 6 */
+		
 		"movl $6, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -142,7 +142,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 7 */
+		
 		"movl $7, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -160,7 +160,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* 8 */
+		
 		"movl $8, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -178,7 +178,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm4, %%xmm2              ;\n"
 		"por %%xmm5, %%xmm3              ;\n"
 
-		/* conditional swap based on sign */
+		
 		"movl %3, %%ecx                  ;\n"
 		"movl %2, %%eax                  ;\n"
 		"xorl $1, %%ecx                  ;\n"
@@ -197,7 +197,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"pxor %%xmm0, %%xmm2             ;\n"
 		"pxor %%xmm1, %%xmm3             ;\n"
 
-		/* store ysubx */
+		
 		"movd %%xmm0, %%ecx              ;\n"
 		"movl %%ecx, %%edx               ;\n"
 		"pshufd $0x39, %%xmm0, %%xmm0    ;\n"
@@ -246,7 +246,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"movl %%ecx, 40(%%eax)           ;\n"
 		"movl %%ecx, 44(%%eax)           ;\n"
 
-		/* store xaddy */
+		
 		"addl $48, %%eax                 ;\n"
 		"movdqa %%xmm2, %%xmm0           ;\n"
 		"movdqa %%xmm3, %%xmm1           ;\n"
@@ -298,14 +298,14 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"movl %%ecx, 40(%%eax)           ;\n"
 		"movl %%ecx, 44(%%eax)           ;\n"
 
-		/* t2d */
+		
 		"movl %0, %%eax                  ;\n"
 		"movd %%eax, %%xmm6              ;\n"
 		"pshufd $0x00, %%xmm6, %%xmm6    ;\n"
 		"pxor %%xmm0, %%xmm0             ;\n"
 		"pxor %%xmm1, %%xmm1             ;\n"
 
-		/* 0 */
+		
 		"movl $0, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -313,7 +313,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"pxor %%xmm0, %%xmm0             ;\n"
 		"pxor %%xmm1, %%xmm1             ;\n"
 
-		/* 1 */
+		
 		"movl $1, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -325,7 +325,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* 2 */
+		
 		"movl $2, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -337,7 +337,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* 3 */
+		
 		"movl $3, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -349,7 +349,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* 4 */
+		
 		"movl $4, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -361,7 +361,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* 5 */
+		
 		"movl $5, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -373,7 +373,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* 6 */
+		
 		"movl $6, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -385,7 +385,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* 7 */
+		
 		"movl $7, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -397,7 +397,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* 8 */
+		
 		"movl $8, %%eax                  ;\n"
 		"movd %%eax, %%xmm7              ;\n"
 		"pshufd $0x00, %%xmm7, %%xmm7    ;\n"
@@ -409,7 +409,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm3, %%xmm0              ;\n"
 		"por %%xmm4, %%xmm1              ;\n"
 
-		/* store t2d */
+		
 		"movl %2, %%eax                  ;\n"
 		"addl $96, %%eax                 ;\n"
 		"movd %%xmm0, %%ecx              ;\n"
@@ -464,9 +464,9 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"movdqa 16(%%eax), %%xmm1        ;\n"
 		"movdqa 32(%%eax), %%xmm2        ;\n"
 
-		/* conditionally negate t2d */
+		
 
-		/* set up 2p in to 3/4 */
+		
 		"movl $0x7ffffda, %%ecx          ;\n"
 		"movl $0x3fffffe, %%edx          ;\n"
 		"movd %%ecx, %%xmm3              ;\n"
@@ -479,7 +479,7 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"movdqa %%xmm4, %%xmm5           ;\n"
 		"punpcklqdq %%xmm4, %%xmm4       ;\n"
 
-		/* subtract and conditionally move */
+		
 		"movl %3, %%ecx                  ;\n"
 		"sub $1, %%ecx                   ;\n"
 		"movd %%ecx, %%xmm6              ;\n"
@@ -499,15 +499,15 @@ ge25519_scalarmult_base_choose_niels(ge25519_niels *t, const uint8_t table[256][
 		"por %%xmm7, %%xmm1              ;\n"
 		"por %%xmm3, %%xmm2              ;\n"
 
-		/* store */
+		
 		"movdqa %%xmm0, 0(%%eax)         ;\n"
 		"movdqa %%xmm1, 16(%%eax)        ;\n"
 		"movdqa %%xmm2, 32(%%eax)        ;\n"
 		:
-		: "m"(u), "r"(&table[pos * 8]), "m"(t), "m"(sign) /* %0 = u, %1 = table, %2 = t, %3 = sign */
+		: "m"(u), "r"(&table[pos * 8]), "m"(t), "m"(sign) 
 		: "%eax", "%ecx", "%edx", "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7", "cc", "memory"
 	);
 }
 
-#endif /* defined(ED25519_GCC_32BIT_SSE_CHOOSE) */
+#endif 
 

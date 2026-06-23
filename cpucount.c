@@ -2,28 +2,28 @@
 
 #ifndef BSD
 #  ifndef __linux__
-// FreeBSD
+
 #    ifdef __FreeBSD__
 #      undef BSD
 #      define BSD
 #    endif
-// OpenBSD
+
 #    ifdef __OpenBSD__
 #      undef BSD
 #      define BSD
 #    endif
-// NetBSD
+
 #    ifdef __NetBSD__
 #      undef BSD
 #      define BSD
 #    endif
-// DragonFly
+
 #    ifdef __DragonFly__
 #      undef BSD
 #      define BSD
 #    endif
-#  endif // __linux__
-// sys/param.h may have its own define
+#  endif 
+
 #  ifdef BSD
 #    undef BSD
 #    include <sys/param.h>
@@ -32,7 +32,7 @@
 #      define BSD
 #    endif
 #  endif
-#endif // BSD
+#endif 
 
 #ifdef BSD
 #  ifndef SYS_PARAM_INCLUDED
@@ -66,14 +66,14 @@ static int parsecpuinfo(void)
 
 	char buf[8192];
 	while (fgets(buf,sizeof(buf),f)) {
-		// we don't like newlines
+		
 		for (char *p = buf;*p;++p) {
 			if (*p == '\n') {
 				*p = 0;
 				break;
 			}
 		}
-		// split ':'
+		
 		char *v = 0;
 		for (char *p = buf;*p;++p) {
 			if (*p == ':') {
@@ -82,18 +82,18 @@ static int parsecpuinfo(void)
 				break;
 			}
 		}
-		// key padding
+		
 		size_t kl = strlen(buf);
 		while (kl > 0 && (buf[kl - 1] == '\t' || buf[kl - 1] == ' ')) {
 			--kl;
 			buf[kl] = 0;
 		}
-		// space before value
+		
 		if (v) {
 			while (*v && (*v == ' ' || *v == '\t'))
 				++v;
 		}
-		// check what we need
+		
 		if (strcasecmp(buf,"processor") == 0 && v) {
 			char *endp = 0;
 			long n = strtol(v,&endp,10);
@@ -104,7 +104,7 @@ static int parsecpuinfo(void)
 
 	fclose(f);
 
-	// count bits in bitmap
+	
 	int ncpu = 0;
 	for (size_t n = 0;n < sizeof(cpubitmap) * 8;++n)
 		if (cpubitmap[n / 8] & (1 << (n % 8)))
@@ -123,8 +123,8 @@ int cpucount(void)
 		return ncpu;
 #endif
 #ifdef __linux__
-	// try parsing /proc/cpuinfo
-	// NOTE seems cygwin can provide this too, idk if need tho
+	
+	
 	ncpu = parsecpuinfo();
 	if (ncpu > 0)
 		return ncpu;

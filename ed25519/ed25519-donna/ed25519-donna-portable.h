@@ -2,7 +2,6 @@
 
 #define mul32x32_64(a,b) (((uint64_t)(a))*(b))
 
-/* platform */
 #if defined(COMPILER_MSVC)
 	#include <intrin.h>
 	#if !defined(_DEBUG)
@@ -26,7 +25,6 @@
 	#define ROTR32(a,b) (((a) >> (b)) | ((a) << (32 - b)))
 #endif
 
-/* uint128_t */
 #if defined(CPU_64BITS) && !defined(ED25519_FORCE_32BIT)
 	#if defined(COMPILER_CLANG) && (COMPILER_CLANG >= 30100)
 		#define HAVE_NATIVE_UINT128
@@ -87,7 +85,6 @@
 	#endif
 #endif
 
-/* endian */
 #if !defined(ED25519_OPENSSLRNG)
 static inline void U32TO8_LE(unsigned char *p, const uint32_t v) {
 	p[0] = (unsigned char)(v      );
@@ -132,5 +129,4 @@ static inline void U64TO8_LE(unsigned char *p, const uint64_t v) {
 
 #include <stdlib.h>
 #include <string.h>
-
 

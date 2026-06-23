@@ -22,15 +22,6 @@ static crypto_uint64 load_4(const unsigned char *in)
   return result;
 }
 
-/*
-Input:
-  s[0]+256*s[1]+...+256^63*s[63] = s
-
-Output:
-  s[0]+256*s[1]+...+256^31*s[31] = s mod l
-  where l = 2^252 + 27742317777372353535851937790883648493.
-  Overwrites s in place.
-*/
 
 void sc_reduce(unsigned char *s)
 {

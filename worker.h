@@ -11,7 +11,6 @@ extern size_t numneedgenerate;
 extern char *workdir;
 extern size_t workdirlen;
 
-// statistics, if enabled
 #ifdef STATISTICS
 struct statstruct {
 	union {

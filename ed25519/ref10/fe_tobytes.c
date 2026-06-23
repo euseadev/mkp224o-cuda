@@ -1,29 +1,5 @@
 #include "fe.h"
 
-/*
-Preconditions:
-  |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
-
-Write p=2^255-19; q=floor(h/p).
-Basic claim: q = floor(2^(-255)(h + 19 2^(-25)h9 + 2^(-1))).
-
-Proof:
-  Have |h|<=p so |q|<=1 so |19^2 2^(-255) q|<1/4.
-  Also have |h-2^230 h9|<2^231 so |19 2^(-255)(h-2^230 h9)|<1/4.
-
-  Write y=2^(-1)-19^2 2^(-255)q-19 2^(-255)(h-2^230 h9).
-  Then 0<y<1.
-
-  Write r=h-pq.
-  Have 0<=r<=p-1=2^255-20.
-  Thus 0<=r+19(2^-255)r<r+19(2^-255)2^255<=2^255-1.
-
-  Write x=r+19(2^-255)r+y.
-  Then 0<x<2^255 so floor(2^(-255)x) = 0 so floor(q+2^(-255)x) = q.
-
-  Have q+2^(-255)x = 2^(-255)(h + 19 2^(-25) h9 + 2^(-1))
-  so floor(2^(-255)(h + 19 2^(-25) h9 + 2^(-1))) = q.
-*/
 
 void fe_tobytes(unsigned char *s,const fe h)
 {
@@ -61,9 +37,9 @@ void fe_tobytes(unsigned char *s,const fe h)
   q = (h8 + q) >> 26;
   q = (h9 + q) >> 25;
 
-  /* Goal: Output h-(2^255-19)q, which is between 0 and 2^255-20. */
+  
   h0 += 19 * q;
-  /* Goal: Output h-2^255 q, which is between 0 and 2^255-20. */
+  
 
   carry0 = h0 >> 26; h1 += carry0; h0 -= carry0 << 26;
   carry1 = h1 >> 25; h2 += carry1; h1 -= carry1 << 25;
@@ -75,14 +51,9 @@ void fe_tobytes(unsigned char *s,const fe h)
   carry7 = h7 >> 25; h8 += carry7; h7 -= carry7 << 25;
   carry8 = h8 >> 26; h9 += carry8; h8 -= carry8 << 26;
   carry9 = h9 >> 25;               h9 -= carry9 << 25;
-                  /* h10 = carry9 */
+                  
 
-  /*
-  Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
-  Have h0+...+2^230 h9 between 0 and 2^255-1;
-  evidently 2^255 h10-2^255 q = 0.
-  Goal: Output h0+...+2^230 h9.
-  */
+  
 
   s[0] = h0 >> 0;
   s[1] = h0 >> 8;

@@ -25,18 +25,21 @@
 
 #include "filters.h"
 
+#ifdef CUDA_ENABLE
+#include "cuda_worker.h"
+#endif
+
 #ifndef _WIN32
 #define FSZ "%zu"
 #else
 #define FSZ "%Iu"
 #endif
 
-// additional 0 terminator is added by C
 const char * const pkprefix = "== ed25519v1-public: type0 ==\0\0";
 const char * const skprefix = "== ed25519v1-secret: type0 ==\0\0";
 
 static const char checksumstr[] = ".onion checksum";
-#define checksumstrlen (sizeof(checksumstr) - 1) // 15
+#define checksumstrlen (sizeof(checksumstr) - 1) 
 
 pthread_mutex_t keysgenerated_mutex;
 volatile size_t keysgenerated = 0;
@@ -47,13 +50,11 @@ int yamlraw = 0;
 int numwords = 1;
 size_t numneedgenerate = 0;
 
-// output directory
 char *workdir = 0;
 size_t workdirlen = 0;
 
-
 #ifdef PASSPHRASE
-// How many times we loop before a reseed
+
 #define DETERMINISTIC_LOOP_COUNT (1<<24)
 
 pthread_mutex_t determseed_mutex;
@@ -61,7 +62,6 @@ u8 determseed[SEED_LEN];
 int pw_skipnear = 0;
 int pw_warnnear = 0;
 #endif
-
 
 char *makesname(void)
 {
@@ -90,9 +90,9 @@ static void onionready(char *sname,const u8 *secret,const u8 *pubonion,int warnn
 		pthread_mutex_unlock(&keysgenerated_mutex);
 	}
 
-	// disabled as this was never ever triggered as far as I'm aware
+	
 #if 0
-	// Sanity check that the public key matches the private one.
+	
 	ge_p3 ALIGN(16) point;
 	u8 testpk[PUBLIC_LEN];
 	ge_scalarmult_base(&point,&secret[SKPREFIX_SIZE]);
@@ -151,7 +151,6 @@ static void onionready(char *sname,const u8 *secret,const u8 *pubonion,int warnn
 #define ADDNUMSUCCESS do ; while (0)
 #endif
 
-
 union pubonionunion {
 	u8 raw[PKPREFIX_SIZE + PUBLIC_LEN + 32];
 	struct {
@@ -161,21 +160,8 @@ union pubonionunion {
 	} i;
 } ;
 
-/*
-// little endian inc
-static void addsk32(u8 *sk)
-{
-	register unsigned int c = 8;
-	for (size_t i = 0;i < 32;++i) {
-		c = (unsigned int)sk[i] + c; sk[i] = c & 0xFF; c >>= 8;
-		// unsure if needed
-		if (!c) break;
-	}
-}
-*/
 
-// 0123 4567 xxxx --3--> 3456 7xxx
-// 0123 4567 xxxx --1--> 1234 567x
+
 static inline void shiftpk(u8 *dst,const u8 *src,size_t sbits)
 {
 	size_t i,sbytes = sbits / 8;
@@ -190,7 +176,6 @@ static inline void shiftpk(u8 *dst,const u8 *src,size_t sbits)
 
 
 
-// in little-endian order, 32 bytes aka 256 bits
 static void addsztoscalar32(u8 *dst,size_t v)
 {
 	int i;
@@ -203,28 +188,25 @@ static void addsztoscalar32(u8 *dst,size_t v)
 }
 
 
-
 #ifdef PASSPHRASE
 static void reseedright(u8 sk[SECRET_LEN])
 {
 	crypto_hash_sha256_state state;
 	crypto_hash_sha256_init(&state);
-	// old right side
+	
 	crypto_hash_sha256_update(&state,&sk[32],32);
-	// new random data
+	
 	randombytes(&sk[32],32);
 	crypto_hash_sha256_update(&state,&sk[32],32);
-	// put result in right side
+	
 	crypto_hash_sha256_final(&state,&sk[32]);
 }
-#endif // PASSPHRASE
-
+#endif 
 
 
 #if !defined(BATCHNUM)
 	#define BATCHNUM 2048
 #endif
-
 
 #include "ed25519/ed25519.h"
 
@@ -279,3 +261,100 @@ void worker_init(void)
 	crypto_sign_ed25519_donna_ge_initeightpoint();
 #endif
 }
+
+#ifdef CUDA_ENABLE
+
+void worker_finish_match(const u8 *a0, const u8 *secondhalf, const u8 *pk_in, u32 b)
+{
+	union pubonionunion pubonion;
+	u8 * const pk = &pubonion.raw[PKPREFIX_SIZE];
+	u8 secret[SKPREFIX_SIZE + SECRET_LEN];
+	u8 * const sk = &secret[SKPREFIX_SIZE];
+	u8 hashsrc[checksumstrlen + PUBLIC_LEN + 1];
+	char *sname;
+
+	if (endwork)
+		return;
+
+	memcpy(secret, skprefix, SKPREFIX_SIZE);
+	memset(&pubonion, 0, sizeof(pubonion));
+	memcpy(pubonion.raw, pkprefix, PKPREFIX_SIZE);
+	memcpy(hashsrc, checksumstr, checksumstrlen);
+	hashsrc[checksumstrlen + PUBLIC_LEN] = 0x03;
+
+	sname = makesname();
+
+	
+	memcpy(sk, a0, 32);
+	memcpy(sk + 32, secondhalf, 32);
+	addsztoscalar32(sk, (size_t)b * 8);
+	
+	if ((sk[0] & 248) != sk[0] || ((sk[31] & 63) | 64) != sk[31]) {
+		free(sname);
+		return;
+	}
+
+	
+	memcpy(pk, pk_in, PUBLIC_LEN);
+	memcpy(&hashsrc[checksumstrlen], pk, PUBLIC_LEN);
+	FIPS202_SHA3_256(hashsrc, sizeof(hashsrc), &pk[PUBLIC_LEN]);
+	pk[PUBLIC_LEN + 2] = 0x03;
+
+	strcpy(base32_to(&sname[direndpos], pk, PUBONION_LEN), ".onion");
+	onionready(sname, secret, pubonion.raw, 0);
+
+	free(sname);
+	sodium_memzero(secret, sizeof(secret));
+}
+
+void cuda_set_filters(void)
+{
+	size_t n = VEC_LENGTH(filters);
+	u8 *fm;
+
+	if (n > 4096) {
+		fprintf(stderr, "too many filters for CUDA worker (max 4096)\n");
+		exit(1);
+	}
+#ifdef PCRE2FILTER
+	(void) fm;
+	fprintf(stderr, "--cuda does not support regex (PCRE2) filters\n");
+	exit(1);
+#else
+	fm = (u8 *)malloc(64 * (n ? n : 1));
+	if (!fm)
+		abort();
+
+#ifdef INTFILTER
+	for (size_t i = 0; i < n; ++i) {
+		u8 *f = fm + i * 64;
+		u8 *m = f + 32;
+		memset(f, 0, 32);
+		memset(m, 0, 32);
+		memcpy(f, &VEC_BUF(filters, i).f, sizeof(IFT));
+# ifndef OMITMASK
+		memcpy(m, &VEC_BUF(filters, i).m, sizeof(IFT));
+# else
+		memcpy(m, &ifiltermask, sizeof(IFT));
+# endif
+	}
+#elif defined(BINFILTER)
+	for (size_t i = 0; i < n; ++i) {
+		u8 *f = fm + i * 64;
+		u8 *m = f + 32;
+		size_t len = VEC_BUF(filters, i).len; 
+		memset(f, 0, 32);
+		memset(m, 0, 32);
+		memcpy(f, VEC_BUF(filters, i).f, len + 1);
+		for (size_t j = 0; j < len; ++j)
+			m[j] = 0xFF;
+		m[len] = VEC_BUF(filters, i).mask;
+	}
+#endif
+
+	cuda_upload_filters(fm, n);
+	free(fm);
+#endif 
+}
+
+#endif 

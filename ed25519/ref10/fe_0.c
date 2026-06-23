@@ -1,8 +1,5 @@
 #include "fe.h"
 
-/*
-h = 0
-*/
 
 void fe_0(fe h)
 {

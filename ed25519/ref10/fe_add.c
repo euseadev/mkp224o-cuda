@@ -1,16 +1,5 @@
 #include "fe.h"
 
-/*
-h = f + g
-Can overlap h with f or g.
-
-Preconditions:
-   |f| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
-   |g| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
-
-Postconditions:
-   |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
-*/
 
 void fe_add(fe h,const fe f,const fe g)
 {

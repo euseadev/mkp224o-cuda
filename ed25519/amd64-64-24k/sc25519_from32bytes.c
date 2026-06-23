@@ -1,10 +1,7 @@
 #include "sc25519.h"
 
-/*Arithmetic modulo the group order n = 2^252 + 27742317777372353535851937790883648493 
- *                                    = 7237005577332262213973186563042994240857116359379907606001950938285454250989
- */
 
-/* Contains order, 2*order, 4*order, 8*order, each represented in 4 consecutive unsigned long long */
+
 static const unsigned long long order[16] = {0x5812631A5CF5D3EDULL, 0x14DEF9DEA2F79CD6ULL, 
                                              0x0000000000000000ULL, 0x1000000000000000ULL,
                                              0xB024C634B9EBA7DAULL, 0x29BDF3BD45EF39ACULL,
@@ -33,7 +30,7 @@ void sc25519_from32bytes(sc25519 *r, const unsigned char x[32])
   unsigned long long mask;
   int i, j;
 
-  /* assuming little-endian */
+  
   r->v[0] = *(unsigned long long *)x;
   r->v[1] = *(((unsigned long long *)x)+1);
   r->v[2] = *(((unsigned long long *)x)+2);
@@ -44,7 +41,7 @@ void sc25519_from32bytes(sc25519 *r, const unsigned char x[32])
     b=0;
     for(i=0;i<4;i++) 
     {
-      b += order[4*j+i]; /* no overflow for this particular order */
+      b += order[4*j+i]; 
       t[i] = r->v[i] - b;
       b = smaller(r->v[i],b);
     }

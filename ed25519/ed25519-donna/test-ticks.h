@@ -1,6 +1,5 @@
 #include "ed25519-donna-portable-identify.h"
 
-/* ticks - not tested on anything other than x86 */
 static uint64_t
 get_ticks(void) {
 #if defined(CPU_X86) || defined(CPU_X86_64)

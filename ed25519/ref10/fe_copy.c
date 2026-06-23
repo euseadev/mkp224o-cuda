@@ -1,8 +1,5 @@
 #include "fe.h"
 
-/*
-h = f
-*/
 
 void fe_copy(fe h,const fe f)
 {

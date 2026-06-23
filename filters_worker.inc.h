@@ -3,8 +3,7 @@
 
 struct bfiltervec filters;
 
-#endif // BINFILTER
-
+#endif 
 
 
 #ifdef INTFILTER
@@ -15,16 +14,14 @@ struct ifiltervec filters;
 IFT ifiltermask;
 # endif
 
-#endif // INTFILTER
-
+#endif 
 
 
 #ifdef PCRE2FILTER
 
 struct pfiltervec filters;
 
-#endif // PCRE2FILTER
-
+#endif 
 
 
 void filters_init(void)
@@ -33,9 +30,7 @@ void filters_init(void)
 }
 
 
-
 #include "filters_common.inc.h"
-
 
 
 #ifdef INTFILTER
@@ -55,7 +50,7 @@ do { \
 	} \
 } while (0)
 
-# else // BINSEARCH
+# else 
 
 #  ifdef OMITMASK
 
@@ -75,7 +70,7 @@ do { \
 	} \
 } while (0)
 
-#  else // OMITMASK
+#  else 
 
 #define DOFILTER(it,pk,code) \
 do { \
@@ -94,15 +89,14 @@ do { \
 	} \
 } while (0)
 
-#  endif // OMITMASK
+#  endif 
 
-# endif // BINSEARCH
+# endif 
 
 #define PREFILTER
 #define POSTFILTER
 
-#endif // INTFILTER
-
+#endif 
 
 #ifdef BINFILTER
 
@@ -122,7 +116,7 @@ do { \
 	} \
 } while (0)
 
-# else // BINSEARCH
+# else 
 
 #define DOFILTER(it,pk,code) \
 do { \
@@ -158,13 +152,12 @@ do { \
 	} \
 } while (0)
 
-# endif // BINSEARCH
+# endif 
 
 #define PREFILTER
 #define POSTFILTER
 
-#endif // BINFILTER
-
+#endif 
 
 #ifdef PCRE2FILTER
 
@@ -191,4 +184,4 @@ do { \
 	} \
 } while (0)
 
-#endif // PCRE2FILTER
+#endif 

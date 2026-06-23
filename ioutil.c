@@ -103,18 +103,18 @@ failrm:
 
 int syncwrite(const char *filename,int secret,const u8 *data,size_t datalen)
 {
-	//fprintf(stderr,"filename = %s\n",filename);
+	
 
 	size_t fnlen = strlen(filename);
 
 	VEC_STRUCT(,char) tmpnamebuf;
 	VEC_INIT(tmpnamebuf);
-	VEC_ADDN(tmpnamebuf,fnlen + 4 /* ".tmp" */ + 1 /* "\0" */);
+	VEC_ADDN(tmpnamebuf,fnlen + 4  + 1 );
 	memcpy(&VEC_BUF(tmpnamebuf,0),filename,fnlen);
 	strcpy(&VEC_BUF(tmpnamebuf,fnlen),".tmp");
 	const char *tmpname = &VEC_BUF(tmpnamebuf,0);
 
-	//fprintf(stderr,"tmpname = %s\n",tmpname);
+	
 
 	int r = syncwritefile(filename,tmpname,secret,data,datalen);
 
@@ -139,11 +139,11 @@ int syncwrite(const char *filename,int secret,const u8 *data,size_t datalen)
 			goto foundslash;
 		}
 	}
-	/* not found slash, fall back to "." */
+	
 	dirname = ".";
 
 foundslash:
-	//fprintf(stderr,"dirname = %s\n",dirname);
+	
 	;
 
 	int dirf;
@@ -153,8 +153,8 @@ foundslash:
 			if (errno == EINTR)
 				continue;
 
-			// failed for non-eintr reasons
-			goto skipdsync; // don't really care enough
+			
+			goto skipdsync; 
 		}
 	} while (0);
 
@@ -165,12 +165,12 @@ foundslash:
 			if (errno == EINTR)
 				continue;
 
-			// failed for non-eintr reasons
-			break; // don't care
+			
+			break; 
 		}
 	} while (0);
 
-	(void) closefile(dirf); // don't care
+	(void) closefile(dirf); 
 
 skipdsync:
 	VEC_FREE(dirnamebuf);
@@ -200,8 +200,8 @@ int writeall(FH fd,const u8 *data,size_t len)
 
 FH createfile(const char *path,int secret)
 {
-	// XXX no support for non-ascii chars
-	// XXX don't know how to handle secret argument
+	
+	
 	(void) secret;
 	return CreateFileA(path,GENERIC_WRITE,0,0,CREATE_ALWAYS,0,0);
 }
@@ -213,37 +213,45 @@ int closefile(FH fd)
 
 int createdir(const char *path,int secret)
 {
-	// XXX don't know how to handle secret argument
+	
 	(void) secret;
-	return CreateDirectoryA(path,0) ? 0 : -1;
+	if (CreateDirectoryA(path,0))
+		return 0;
+	DWORD err = GetLastError();
+	if (err == ERROR_ALREADY_EXISTS) {
+		
+		DWORD attr = GetFileAttributesA(path);
+		if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
+			return 0;
+	}
+	return -1;
 }
 
 static int syncwritefile(const char *filename,const char *tmpname,int secret,const u8 *data,size_t datalen)
 {
 	FH f = createfile(tmpname,secret);
 	if (f == FH_invalid) {
-		//fprintf(stderr,"!failed to create\n");
+		
 		return -1;
 	}
 
-
 	if (writeall(f,data,datalen) < 0) {
-		//fprintf(stderr,"!failed to write\n");
+		
 		goto failclose;
 	}
 
 	if (FlushFileBuffers(f) == 0) {
-		//fprintf(stderr,"!failed to flush\n");
+		
 		goto failclose;
 	}
 
 	if (closefile(f) < 0) {
-		//fprintf(stderr,"!failed to close\n");
+		
 		goto failrm;
 	}
 
 	if (MoveFileExA(tmpname,filename,MOVEFILE_REPLACE_EXISTING) == 0) {
-		//fprintf(stderr,"!failed to move\n");
+		
 		goto failrm;
 	}
 
@@ -263,7 +271,7 @@ int syncwrite(const char *filename,int secret,const u8 *data,size_t datalen)
 
 	VEC_STRUCT(,char) tmpnamebuf;
 	VEC_INIT(tmpnamebuf);
-	VEC_ADDN(tmpnamebuf,fnlen + 4 /* ".tmp" */ + 1 /* "\0" */);
+	VEC_ADDN(tmpnamebuf,fnlen + 4  + 1 );
 	memcpy(&VEC_BUF(tmpnamebuf,0),filename,fnlen);
 	strcpy(&VEC_BUF(tmpnamebuf,fnlen),".tmp");
 	const char *tmpname = &VEC_BUF(tmpnamebuf,0);
@@ -275,7 +283,7 @@ int syncwrite(const char *filename,int secret,const u8 *data,size_t datalen)
 	if (r < 0)
 		return r;
 
-	// can't fsync parent dir on windows so just end here
+	
 
 	return 0;
 }

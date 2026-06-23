@@ -12,7 +12,6 @@
 #undef ge_p3_batchtobytes_destructive_finish
 #undef ge_scalarmult_base
 
-
 #ifdef ED25519_ref10
 
 #undef ge_frombytes_negate_vartime
@@ -34,7 +33,6 @@
 #undef ge_double_scalarmult_vartime
 
 #endif
-
 
 #if defined(ED25519_amd64_51_30k) || defined(ED25519_amd64_64_24k)
 
@@ -66,7 +64,6 @@
 #undef ge_p3_tobytes
 
 #endif
-
 
 #ifdef ED25519_donna
 

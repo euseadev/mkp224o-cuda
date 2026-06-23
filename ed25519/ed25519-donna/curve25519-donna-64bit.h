@@ -1,10 +1,3 @@
-/*
-	Public domain by Adam Langley <agl@imperialviolet.org> &
-	                 Andrew M. <liquidsun@gmail.com>
-	See: https://github.com/floodyberry/curve25519-donna
-
-	64bit integer curve25519 implementation
-*/
 
 #if !defined(ED25519_SSE2) && defined(ED25519_64BIT)
 
@@ -14,7 +7,6 @@ static const uint64_t reduce_mask_40 = ((uint64_t)1 << 40) - 1;
 static const uint64_t reduce_mask_51 = ((uint64_t)1 << 51) - 1;
 static const uint64_t reduce_mask_56 = ((uint64_t)1 << 56) - 1;
 
-/* out = in */
 DONNA_INLINE static void
 curve25519_copy(bignum25519 out, const bignum25519 in) {
 	out[0] = in[0];
@@ -24,7 +16,6 @@ curve25519_copy(bignum25519 out, const bignum25519 in) {
 	out[4] = in[4];
 }
 
-/* out = a + b */
 DONNA_INLINE static void
 curve25519_add(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[0] = a[0] + b[0];
@@ -34,7 +25,6 @@ curve25519_add(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[4] = a[4] + b[4];
 }
 
-/* out = a + b, where a and/or b are the result of a basic op (add,sub) */
 DONNA_INLINE static void
 curve25519_add_after_basic(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[0] = a[0] + b[0];
@@ -55,13 +45,11 @@ curve25519_add_reduce(bignum25519 out, const bignum25519 a, const bignum25519 b)
 	out[0] += c * 19;
 }
 
-/* multiples of p */
 static const uint64_t twoP0      = 0x0fffffffffffda;
 static const uint64_t twoP1234   = 0x0ffffffffffffe;
 static const uint64_t fourP0     = 0x1fffffffffffb4;
 static const uint64_t fourP1234  = 0x1ffffffffffffc;
 
-/* out = a - b */
 DONNA_INLINE static void
 curve25519_sub(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[0] = a[0] + twoP0    - b[0];
@@ -71,7 +59,6 @@ curve25519_sub(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[4] = a[4] + twoP1234 - b[4];
 }
 
-/* out = a - b, where a and/or b are the result of a basic op (add,sub) */
 DONNA_INLINE static void
 curve25519_sub_after_basic(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[0] = a[0] + fourP0    - b[0];
@@ -92,7 +79,6 @@ curve25519_sub_reduce(bignum25519 out, const bignum25519 a, const bignum25519 b)
 	out[0] += c * 19;
 }
 
-/* out = -a */
 DONNA_INLINE static void
 curve25519_neg(bignum25519 out, const bignum25519 a) {
 	uint64_t c;
@@ -104,7 +90,6 @@ curve25519_neg(bignum25519 out, const bignum25519 a) {
 	out[0] += c * 19;
 }
 
-/* out = a * b */
 DONNA_INLINE static void
 curve25519_mul(bignum25519 out, const bignum25519 in2, const bignum25519 in) {
 #if !defined(HAVE_NATIVE_UINT128)
@@ -156,7 +141,6 @@ curve25519_mul(bignum25519 out, const bignum25519 in2, const bignum25519 in) {
 	mul64x64_128(mul, r4, s4) add128(t[3], mul)
 #endif
 
-
 	                     r0 = lo128(t[0]) & reduce_mask_51; shr128(c, t[0], 51);
 	add128_64(t[1], c)   r1 = lo128(t[1]) & reduce_mask_51; shr128(c, t[1], 51);
 	add128_64(t[2], c)   r2 = lo128(t[2]) & reduce_mask_51; shr128(c, t[2], 51);
@@ -177,7 +161,6 @@ curve25519_mul_noinline(bignum25519 out, const bignum25519 in2, const bignum2551
 	curve25519_mul(out, in2, in);
 }
 
-/* out = in^(2 * count) */
 DONNA_NOINLINE static void
 curve25519_square_times(bignum25519 out, const bignum25519 in, uint64_t count) {
 #if !defined(HAVE_NATIVE_UINT128)
@@ -285,7 +268,6 @@ curve25519_square(bignum25519 out, const bignum25519 in) {
 	out[4] = r4;
 }
 
-/* Take a little-endian, 32-byte number and expand it into polynomial form */
 DONNA_INLINE static void
 curve25519_expand(bignum25519 out, const unsigned char *in) {
 	static const union { uint8_t b[2]; uint16_t s; } endian_check = {{1,0}};
@@ -320,9 +302,6 @@ curve25519_expand(bignum25519 out, const unsigned char *in) {
 	out[4] = x3 & reduce_mask_51;
 }
 
-/* Take a fully reduced polynomial form number and contract it into a
- * little-endian, 32-byte array
- */
 DONNA_INLINE static void
 curve25519_contract(unsigned char *out, const bignum25519 input) {
 	uint64_t t[5];
@@ -349,19 +328,19 @@ curve25519_contract(unsigned char *out, const bignum25519 input) {
 	curve25519_contract_carry_full()
 	curve25519_contract_carry_full()
 
-	/* now t is between 0 and 2^255-1, properly carried. */
-	/* case 1: between 0 and 2^255-20. case 2: between 2^255-19 and 2^255-1. */
+	
+	
 	t[0] += 19;
 	curve25519_contract_carry_full()
 
-	/* now between 19 and 2^255-1 in both cases, and offset by 19. */
+	
 	t[0] += (reduce_mask_51 + 1) - 19;
 	t[1] += (reduce_mask_51 + 1) - 1;
 	t[2] += (reduce_mask_51 + 1) - 1;
 	t[3] += (reduce_mask_51 + 1) - 1;
 	t[4] += (reduce_mask_51 + 1) - 1;
 
-	/* now between 2^255 and 2^256-20, and offset by 2^255. */
+	
 	curve25519_contract_carry_final()
 
 	#define write51full(n,shift) \
@@ -376,7 +355,6 @@ curve25519_contract(unsigned char *out, const bignum25519 input) {
 
 #if !defined(ED25519_GCC_64BIT_CHOOSE)
 
-/* out = (flag) ? in : out */
 DONNA_INLINE static void
 curve25519_move_conditional_bytes(uint8_t out[96], const uint8_t in[96], uint64_t flag) {
 	const uint64_t nb = flag - 1, b = ~nb;
@@ -396,7 +374,6 @@ curve25519_move_conditional_bytes(uint8_t out[96], const uint8_t in[96], uint64_
 	outq[11] = (outq[11] & nb) | (inq[11] & b);
 }
 
-/* if (iswap) swap(a, b) */
 DONNA_INLINE static void
 curve25519_swap_conditional(bignum25519 a, bignum25519 b, uint64_t iswap) {
 	const uint64_t swap = (uint64_t)(-(int64_t)iswap);
@@ -409,8 +386,8 @@ curve25519_swap_conditional(bignum25519 a, bignum25519 b, uint64_t iswap) {
 	x4 = swap & (a[4] ^ b[4]); a[4] ^= x4; b[4] ^= x4;
 }
 
-#endif /* ED25519_GCC_64BIT_CHOOSE */
+#endif 
 
 #define ED25519_64BIT_TABLES
 
-#endif /* !defined(ED25519_SSE2) && defined(ED25519_64BIT) */
+#endif 

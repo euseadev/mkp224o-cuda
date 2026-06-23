@@ -21,7 +21,6 @@ static void setneutral(ge25519 *r)
   fe25519_setint(&r->t,0);
 }
 
-/* computes [s1]p1 + [s2]p2 */
 void ge25519_double_scalarmult_vartime(ge25519_p3 *r, const ge25519_p3 *p1, const sc25519 *s1, const sc25519 *s2)
 {
   signed char slide1[256], slide2[256];
@@ -35,10 +34,10 @@ void ge25519_double_scalarmult_vartime(ge25519_p3 *r, const ge25519_p3 *p1, cons
   sc25519_slide(slide1, s1, S1_SWINDOWSIZE);
   sc25519_slide(slide2, s2, S2_SWINDOWSIZE);
 
-  /* precomputation */
+  
   pre1[0] = *(ge25519_pniels *)p1;                                                                         
   ge25519_dbl_p1p1(&t,(ge25519_p2 *)pre1);      ge25519_p1p1_to_p3(&d1, &t);
-  /* Convert pre[0] to projective Niels representation */
+  
   d = pre1[0].ysubx;
   fe25519_sub(&pre1[0].ysubx, &pre1[0].xaddy, &pre1[0].ysubx);
   fe25519_add(&pre1[0].xaddy, &pre1[0].xaddy, &d);
@@ -47,7 +46,7 @@ void ge25519_double_scalarmult_vartime(ge25519_p3 *r, const ge25519_p3 *p1, cons
   for(i=0;i<PRE1_SIZE-1;i++)
   {
     ge25519_pnielsadd_p1p1(&t, &d1, &pre1[i]);  ge25519_p1p1_to_p3((ge25519_p3 *)&pre1[i+1], &t);
-    /* Convert pre1[i+1] to projective Niels representation */
+    
     d = pre1[i+1].ysubx;
     fe25519_sub(&pre1[i+1].ysubx, &pre1[i+1].xaddy, &pre1[i+1].ysubx);
     fe25519_add(&pre1[i+1].xaddy, &pre1[i+1].xaddy, &d);

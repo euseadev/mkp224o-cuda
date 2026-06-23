@@ -1,9 +1,3 @@
-/*
-	Public domain by Andrew M. <liquidsun@gmail.com>
-	See: https://github.com/floodyberry/curve25519-donna
-
-	32 bit integer curve25519 implementation
-*/
 
 #if !defined(ED25519_SSE2) && !defined(ED25519_64BIT)
 
@@ -14,7 +8,6 @@ static const uint32_t reduce_mask_25 = (1 << 25) - 1;
 static const uint32_t reduce_mask_26 = (1 << 26) - 1;
 
 
-/* out = in */
 DONNA_INLINE static void
 curve25519_copy(bignum25519 out, const bignum25519 in) {
 	out[0] = in[0];
@@ -29,7 +22,6 @@ curve25519_copy(bignum25519 out, const bignum25519 in) {
 	out[9] = in[9];
 }
 
-/* out = a + b */
 DONNA_INLINE static void
 curve25519_add(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[0] = a[0] + b[0];
@@ -76,7 +68,6 @@ curve25519_add_reduce(bignum25519 out, const bignum25519 a, const bignum25519 b)
 	out[0] += 19 * c;
 }
 
-/* multiples of p */
 static const uint32_t twoP0       = 0x07ffffda;
 static const uint32_t twoP13579   = 0x03fffffe;
 static const uint32_t twoP2468    = 0x07fffffe;
@@ -84,7 +75,6 @@ static const uint32_t fourP0      = 0x0fffffb4;
 static const uint32_t fourP13579  = 0x07fffffc;
 static const uint32_t fourP2468   = 0x0ffffffc;
 
-/* out = a - b */
 DONNA_INLINE static void
 curve25519_sub(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	uint32_t c;
@@ -100,7 +90,6 @@ curve25519_sub(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[9] = twoP13579 + a[9] - b[9]    ;
 }
 
-/* out = a - b, where a is the result of a basic op (add,sub) */
 DONNA_INLINE static void
 curve25519_sub_after_basic(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	uint32_t c;
@@ -133,7 +122,6 @@ curve25519_sub_reduce(bignum25519 out, const bignum25519 a, const bignum25519 b)
 	out[0] += 19 * c;
 }
 
-/* out = -a */
 DONNA_INLINE static void
 curve25519_neg(bignum25519 out, const bignum25519 a) {
 	uint32_t c;
@@ -150,7 +138,6 @@ curve25519_neg(bignum25519 out, const bignum25519 a) {
 	out[0] += 19 * c;
 }
 
-/* out = a * b */
 #define curve25519_mul_noinline curve25519_mul
 static void
 curve25519_mul(bignum25519 out, const bignum25519 a, const bignum25519 b) {
@@ -249,7 +236,6 @@ curve25519_mul(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	out[9] = r9;
 }
 
-/* out = in*in */
 static void
 curve25519_square(bignum25519 out, const bignum25519 in) {
 	uint32_t r0,r1,r2,r3,r4,r5,r6,r7,r8,r9;
@@ -324,7 +310,6 @@ curve25519_square(bignum25519 out, const bignum25519 in) {
 }
 
 
-/* out = in ^ (2 * count) */
 static void
 curve25519_square_times(bignum25519 out, const bignum25519 in, int count) {
 	uint32_t r0,r1,r2,r3,r4,r5,r6,r7,r8,r9;
@@ -400,7 +385,6 @@ curve25519_square_times(bignum25519 out, const bignum25519 in, int count) {
 	out[9] = r9;
 }
 
-/* Take a little-endian, 32-byte number and expand it into polynomial form */
 static void
 curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 	static const union { uint8_t b[2]; uint16_t s; } endian_check = {{1,0}};
@@ -444,9 +428,6 @@ curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 	out[9] = ((                       x7) >>  6) & 0x1ffffff;
 }
 
-/* Take a fully reduced polynomial form number and contract it into a
- * little-endian, 32-byte array
- */
 static void
 curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	bignum25519 f;
@@ -474,12 +455,12 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	carry_pass_full()
 	carry_pass_full()
 
-	/* now t is between 0 and 2^255-1, properly carried. */
-	/* case 1: between 0 and 2^255-20. case 2: between 2^255-19 and 2^255-1. */
+	
+	
 	f[0] += 19;
 	carry_pass_full()
 
-	/* now between 19 and 2^255-1 in both cases, and offset by 19. */
+	
 	f[0] += (reduce_mask_26 + 1) - 19;
 	f[1] += (reduce_mask_25 + 1) - 1;
 	f[2] += (reduce_mask_26 + 1) - 1;
@@ -491,7 +472,7 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	f[8] += (reduce_mask_26 + 1) - 1;
 	f[9] += (reduce_mask_25 + 1) - 1;
 
-	/* now between 2^255 and 2^256-20, and offset by 2^255. */
+	
 	carry_pass_final()
 
 	#undef carry_pass
@@ -529,7 +510,6 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 }
 
 
-/* out = (flag) ? in : out */
 DONNA_INLINE static void
 curve25519_move_conditional_bytes(uint8_t out[96], const uint8_t in[96], uint32_t flag) {
 	const uint32_t nb = flag - 1, b = ~nb;
@@ -562,7 +542,6 @@ curve25519_move_conditional_bytes(uint8_t out[96], const uint8_t in[96], uint32_
 
 }
 
-/* if (iswap) swap(a, b) */
 DONNA_INLINE static void
 curve25519_swap_conditional(bignum25519 a, bignum25519 b, uint32_t iswap) {
 	const uint32_t swap = (uint32_t)(-(int32_t)iswap);
@@ -580,4 +559,4 @@ curve25519_swap_conditional(bignum25519 a, bignum25519 b, uint32_t iswap) {
 	x9 = swap & (a[9] ^ b[9]); a[9] ^= x9; b[9] ^= x9;
 }
 
-#endif /* !defined(ED25519_SSE2) && !defined(ED25519_64BIT) */
+#endif 

@@ -1,10 +1,5 @@
 #if defined(ED25519_TEST)
-/*
-	ISAAC+ "variant", the paper is not clear on operator precedence and other
-	things. This is the "first in, first out" option!
 
-	Not threadsafe or securely initialized, only for deterministic testing
-*/
 typedef struct isaacp_state_t {
 	uint32_t state[256];
 	unsigned char buffer[1024];

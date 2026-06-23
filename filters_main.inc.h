@@ -17,26 +17,10 @@ static inline int filter_compare(const void *p1,const void *p2)
 
 #  ifdef EXPANDMASK
 
-/*
- * so we have 2 masks with basically random bits
- * we first gonna find where these masks are common
- * then we gonna find where new mask has more bits than old
- * common areas must be unchanged
- * gaps in both must be unchanged
- * but new bits must be filled
- * therefore, lets just fill old gaps and common areas with 1s
- * before add, OR with these 1s
- * then perform add. these 1s have property to push positive bits to 0s
- * we already know how much new gaps we need to fill, so this wont overflow
- * after this addition, AND result with NEG of combined mask, and OR with old value
- * this will produce new proper value
- * we need to re-fill 1s before every add to keep structure working
- */
 
 int flattened = 0;
 
-// add expanded set of values
-// allocates space on its own
+
 static void ifilter_addexpanded(
 	struct intfilter *ifltr,
 	register IFT newbits,
@@ -56,8 +40,7 @@ static void ifilter_addexpanded(
 	}
 }
 
-// expand existing stuff
-// allocates needed stuff on its own
+
 static void ifilter_expand(
 	register IFT newbits,
 	register IFT notnewbits,
@@ -66,7 +49,7 @@ static void ifilter_expand(
 	flattened = 1;
 	size_t len = VEC_LENGTH(filters);
 	VEC_ADDN(filters,newbitsum * len);
-	size_t esz = newbitsum + 1; // size of expanded elements
+	size_t esz = newbitsum + 1; 
 	for (size_t i = len - 1;;--i) {
 		register IFT x = VEC_BUF(filters,i).f;
 		register IFT y = 0;
@@ -84,13 +67,13 @@ static void ifilter_expand(
 static inline void ifilter_addflatten(struct intfilter *ifltr,IFT mask)
 {
 	if (VEC_LENGTH(filters) == 0) {
-		// simple
+		
 		VEC_ADD(filters,*ifltr);
 		ifiltermask = mask;
 		return;
 	}
 	if (ifiltermask == mask) {
-		// lucky
+		
 		VEC_ADD(filters,*ifltr);
 		return;
 	}
@@ -100,37 +83,29 @@ static inline void ifilter_addflatten(struct intfilter *ifltr,IFT mask)
 	IFT newbitsum = ifilter_bitsum(newbits);
 
 	if (ifiltermask > mask) {
-		// current mask covers more bits
-		// expand new filter
+		
+		
 		ifilter_addexpanded(ifltr,newbits,notnewbits,newbitsum);
 	}
 	else {
-		// new filter mask covers more bits
-		// adjust current mask and expand current filters
+		
+		
 		ifiltermask = mask;
 		ifilter_expand(newbits,notnewbits,newbitsum);
 		VEC_ADD(filters,*ifltr);
 	}
 }
 
-#  endif // EXPANDMASK
+#  endif 
 
-# else // OMITMASK
+# else 
 
-/*
- * struct intfilter layout: filter,mask
- * stuff is compared in big-endian way, so memcmp
- * filter needs to be compared first
- * if its equal, mask needs to be compared
- * memcmp is aplicable there too
- * due to struct intfilter layout, it all can be stuffed into one memcmp call
- */
 static inline int filter_compare(const void *p1,const void *p2)
 {
 	return memcmp(p1,p2,sizeof(struct intfilter));
 }
 
-# endif // OMITMASK
+# endif 
 
 static void filter_sort(void)
 {
@@ -139,7 +114,7 @@ static void filter_sort(void)
 		qsort(&VEC_BUF(filters,0),len,sizeof(struct intfilter),&filter_compare);
 }
 
-#endif // INTFILTER
+#endif 
 
 #ifdef BINFILTER
 
@@ -180,8 +155,7 @@ static void filter_sort(void)
 		qsort(&VEC_BUF(filters,0),len,sizeof(struct binfilter),&filter_compare);
 }
 
-#endif // BINFILTER
-
+#endif 
 
 
 #ifndef PCRE2FILTER
@@ -190,10 +164,10 @@ static inline int filters_a_includes_b(size_t a,size_t b)
 # ifdef INTFILTER
 #  ifdef OMITMASK
 	return VEC_BUF(filters,a).f == VEC_BUF(filters,b).f;
-#  else // OMITMASK
+#  else 
 	return VEC_BUF(filters,a).f == (VEC_BUF(filters,b).f & VEC_BUF(filters,a).m);
-#  endif // OMITMASK
-# else // INTFILTER
+#  endif 
+# else 
 	const struct binfilter *fa = &VEC_BUF(filters,a);
 	const struct binfilter *fb = &VEC_BUF(filters,b);
 
@@ -212,14 +186,14 @@ static inline int filters_a_includes_b(size_t a,size_t b)
 		return 0;
 
 	return fa->f[l] == (fb->f[l] & fa->mask);
-# endif // INTFILTER
+# endif 
 }
 
 static void filters_dedup(void)
 {
-	size_t last = ~(size_t)0; // index after last matching element
-	size_t chk;               // element to compare against
-	size_t st;                // start of area to destroy
+	size_t last = ~(size_t)0; 
+	size_t chk;               
+	size_t st;                
 
 	size_t len = VEC_LENGTH(filters);
 	for (size_t i = 1;i < len;++i) {
@@ -250,7 +224,7 @@ static void filters_dedup(void)
 		VEC_SETLENGTH(filters,st);
 	}
 }
-#endif // !PCRE2FILTER
+#endif 
 
 static void filters_clean(void)
 {
@@ -267,7 +241,6 @@ size_t filters_count(void)
 {
 	return VEC_LENGTH(filters);
 }
-
 
 static void filters_print(void)
 {
@@ -303,13 +276,13 @@ static void filters_print(void)
 		while (len < sizeof(IFT) && imraw[len] != 0x00) ++len;
 		u8 mask = imraw[len-1];
 		u8 *ifraw = (u8 *)&VEC_BUF(filters,i).f;
-#endif // INTFILTER
+#endif 
 
 #ifdef BINFILTER
 		size_t len = VEC_BUF(filters,i).len + 1;
 		u8 mask = VEC_BUF(filters,i).mask;
 		u8 *ifraw = VEC_BUF(filters,i).f;
-#endif // BINFILTER
+#endif 
 #ifdef NEEDBINFILTER
 		base32_to(buf0,ifraw,len);
 		memcpy(bufx,ifraw,len);
@@ -320,10 +293,10 @@ static void filters_print(void)
 			++a, ++b;
 		*a = 0;
 		fprintf(stderr,"\t%s\n",buf0);
-#endif // NEEDBINFILTER
+#endif 
 #ifdef PCRE2FILTER
 		fprintf(stderr,"\t%s\n",VEC_BUF(filters,i).str);
-#endif // PCRE2FILTER
+#endif 
 	}
 	fprintf(stderr,"in total, " FSZ " %s\n",l,l == 1 ? "filter" : "filters");
 }
@@ -340,7 +313,7 @@ void filters_add(const char *filter)
 	} fc,mc;
 # endif
 
-	// skip regex start symbol. we do not support regex tho
+	
 	if (*filter == '^')
 		++filter;
 
@@ -392,15 +365,15 @@ void filters_add(const char *filter)
 
 #  ifdef OMITMASK
 	ifilter_addflatten(&ifltr,mc.i);
-#  else // OMITMASK
+#  else 
 	VEC_ADD(filters,ifltr);
-#  endif // OMITMASK
-# endif // INTFILTER
+#  endif 
+# endif 
 
 # ifdef BINFILTER
 	VEC_ADD(filters,bf);
-# endif // BINFILTER
-#endif // NEEDBINFILTER
+# endif 
+#endif 
 
 #ifdef PCRE2FILTER
 	int errornum;
@@ -417,7 +390,7 @@ void filters_add(const char *filter)
 		return;
 	}
 
-	// attempt to JIT. ignore error
+	
 	(void) pcre2_jit_compile(re,PCRE2_JIT_COMPLETE);
 
 	struct pcre2filter f;
@@ -429,7 +402,7 @@ void filters_add(const char *filter)
 		abort();
 	memcpy(f.str,filter,fl);
 	VEC_ADD(filters,f);
-#endif // PCRE2FILTER
+#endif 
 }
 
 static void filters_prepare(void)

@@ -13,7 +13,7 @@ void sc25519_window4(signed char r[64], const sc25519 *s)
   for(i=0;i<16;i++)
     r[i+48] = (s->v[3] >> (4*i)) & 15;
 
-  /* Making it signed */
+  
   carry = 0;
   for(i=0;i<63;i++)
   {

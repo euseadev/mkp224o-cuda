@@ -31,14 +31,18 @@
 
 #include "likely.h"
 
+#ifdef CUDA_ENABLE
+#include "cuda_worker.h"
+static int use_cuda = 0;
+#endif
+
 #ifndef _WIN32
 #define FSZ "%zu"
 #else
 #define FSZ "%Iu"
 #endif
 
-// Argon2 hashed passphrase stretching settings
-// NOTE: changing these will break compatibility
+
 #define PWHASH_OPSLIMIT 48
 #define PWHASH_MEMLIMIT 64 * 1024 * 1024
 #define PWHASH_ALG      crypto_pwhash_ALG_ARGON2ID13
@@ -49,13 +53,12 @@ static int verboseflag = 0;
 static int wantdedup = 0;
 #endif
 
-// 0, direndpos, onionendpos
-// printstartpos = either 0 or direndpos
-// printlen      = either onionendpos + 1 or ONION_LEN + 1 (additional 1 is for newline)
-size_t onionendpos;   // end of .onion within string
-size_t direndpos;     // end of dir before .onion within string
-size_t printstartpos; // where to start printing from
-size_t printlen;      // precalculated, related to printstartpos
+
+
+size_t onionendpos;   
+size_t direndpos;     
+size_t printstartpos; 
+size_t printlen;      
 
 pthread_mutex_t fout_mutex;
 FILE *fout;
@@ -90,8 +93,8 @@ VEC_STRUCT(tstatsvec,struct tstatstruct);
 static void printhelp(FILE *out,const char *progname)
 {
 	fprintf(out,
-		//         1         2         3         4         5         6         7
-		//1234567890123456789012345678901234567890123456789012345678901234567890123456789
+		
+		
 		"Usage: %s FILTER [FILTER...] [OPTION]\n"
 		"       %s -f FILTERFILE [OPTION]\n"
 		"Options:\n"
@@ -137,6 +140,10 @@ static void printhelp(FILE *out,const char *progname)
 #endif
 		"      --rawyaml         raw (unprefixed) public/secret keys for -y/-Y\n"
 		"                        (may be useful for tor controller API).\n"
+#ifdef CUDA_ENABLE
+		"      --cuda            use CUDA GPU for key generation instead of CPU\n"
+		"                        threads (overrides -t/-j).\n"
+#endif
 		"  -h, --help, --usage   print help to stdout and quit.\n"
 		"  -V, --version         print version information to stdout and exit.\n"
 		,progname,progname);
@@ -244,7 +251,7 @@ static void *checkpointworker(void *arg)
 		clock_gettime(CLOCK_MONOTONIC,&nowtime);
 		inowtime = (1000000 * (u64)nowtime.tv_sec) + ((u64)nowtime.tv_nsec / 1000);
 
-		if ((i64)(inowtime - ilasttime) >= 300 * 1000000 /* 5 minutes */) {
+		if ((i64)(inowtime - ilasttime) >= 300 * 1000000 ) {
 			savecheckpoint();
 			ilasttime = inowtime;
 		}
@@ -329,8 +336,12 @@ int main(int argc,char **argv)
 					printversion();
 					exit(0);
 				}
-				else if (!strcmp(arg,"rawyaml"))
-					yamlraw = 1;
+			else if (!strcmp(arg,"rawyaml"))
+				yamlraw = 1;
+#ifdef CUDA_ENABLE
+			else if (!strcmp(arg,"cuda"))
+				use_cuda = 1;
+#endif
 #ifdef PASSPHRASE
 				else if (!strcmp(arg,"checkpoint")) {
 					if (argc--)
@@ -346,7 +357,7 @@ int main(int argc,char **argv)
 					pw_warnnear = 1;
 					pw_skipnear = 0;
 				}
-#endif // PASSPHRASE
+#endif 
 				else {
 					fprintf(stderr,"unrecognised argument: --%s\n",arg);
 					exit(1);
@@ -428,9 +439,9 @@ int main(int argc,char **argv)
 					e_additional();
 			}
 			else if (*arg == 'Z')
-				/* ignored */ ;
+				 ;
 			else if (*arg == 'z')
-				/* ignored */ ;
+				 ;
 			else if (*arg == 'B')
 				wt = WT_BATCH;
 			else if (*arg == 's') {
@@ -496,7 +507,7 @@ int main(int argc,char **argv)
 				setpassphrase(pass);
 				deterministic = 1;
 			}
-#endif // PASSPHRASE
+#endif 
 			else {
 				fprintf(stderr,"unrecognised argument: -%c\n",*arg);
 				exit(1);
@@ -518,6 +529,21 @@ int main(int argc,char **argv)
 		exit(1);
 	}
 
+#ifdef CUDA_ENABLE
+	if (use_cuda) {
+#ifdef PASSPHRASE
+		if (deterministic) {
+			fprintf(stderr,"--cuda does not support passphrase mode (-p/-P) yet; use CPU mode\n");
+			exit(1);
+		}
+#endif
+		if (numwords > 1) {
+			fprintf(stderr,"--cuda does not support multi-word (-N) filters yet\n");
+			exit(1);
+		}
+	}
+#endif
+
 #ifdef PASSPHRASE
 	if (checkpointfile && !deterministic) {
 		fprintf(stderr,"--checkpoint requires passphrase\n");
@@ -538,18 +564,23 @@ int main(int argc,char **argv)
 		exit(1);
 	}
 
-	if (workdir)
-		createdir(workdir,1);
+	if (workdir) {
+		if (createdir(workdir,1) != 0) {
+			fprintf(stderr,"ERROR: could not create output directory \"%s\". "
+				"Perhaps a file with that name already exists?\n",workdir);
+			exit(1);
+		}
+	}
 
 	direndpos = workdirlen;
 	onionendpos = workdirlen + ONION_LEN;
 
 	if (!dirnameflag) {
 		printstartpos = direndpos;
-		printlen = ONION_LEN + 1; // + '\n'
+		printlen = ONION_LEN + 1; 
 	} else {
 		printstartpos = 0;
-		printlen = onionendpos + 1; // + '\n'
+		printlen = onionendpos + 1; 
 	}
 
 	if (yamlinput) {
@@ -605,7 +636,11 @@ int main(int argc,char **argv)
 		if (numthreads <= 0)
 			numthreads = 1;
 	}
-	if (!quietflag)
+	if (!quietflag
+#ifdef CUDA_ENABLE
+		&& !use_cuda
+#endif
+	)
 		fprintf(stderr,"using %d %s\n",
 			numthreads,numthreads == 1 ? "thread" : "threads");
 
@@ -613,14 +648,14 @@ int main(int argc,char **argv)
 	if (deterministic) {
 		if (!quietflag && numneedgenerate != 1 && !pw_skipnear && !pw_warnnear)
 			fprintf(stderr,
-				//         1         2         3         4         5         6         7
-				//1234567890123456789012345678901234567890123456789012345678901234567890123456789
+				
+				
 				"CAUTION: avoid using keys generated with the same password for unrelated\n"
 				"         services, as single leaked key may help an attacker to regenerate\n"
 				"		  related keys; to silence this warning, pass --skipnear or --warnnear.\n");
 		if (checkpointfile) {
 			memcpy(orig_determseed,determseed,sizeof(determseed));
-			// Read current checkpoint position if file exists
+			
 			FILE *checkout = fopen(checkpointfile,"r");
 			if (checkout) {
 				u8 checkpoint[SEED_LEN];
@@ -630,7 +665,7 @@ int main(int argc,char **argv)
 				}
 				fclose(checkout);
 
-				// Apply checkpoint to determseed
+				
 				bool carry = 0;
 				for (int i = 0; i < SEED_LEN; i++) {
 					determseed[i] += checkpoint[i] + carry;
@@ -643,6 +678,24 @@ int main(int argc,char **argv)
 
 	signal(SIGTERM,termhandler);
 	signal(SIGINT,termhandler);
+
+#ifdef CUDA_ENABLE
+	if (use_cuda) {
+		if (!cuda_available()) {
+			fprintf(stderr,"--cuda requested but no CUDA-capable GPU was found\n");
+			exit(1);
+		}
+		if (!quietflag)
+			fprintf(stderr,"using CUDA GPU for key generation\n");
+		cuda_set_filters();
+#ifdef STATISTICS
+		cuda_worker_run(reportdelay,realtimestats);
+#else
+		cuda_worker_run(0,0);
+#endif
+		goto done;
+	}
+#endif
 
 	VEC_INIT(threads);
 	VEC_ADDN(threads,numthreads);
@@ -662,13 +715,13 @@ int main(int argc,char **argv)
 		tattrp = 0;
 	}
 	else {
-		// 256KiB plus whatever batch stuff uses if in batch mode
+		
 		size_t ss = 256 << 10;
 		if (wt == WT_BATCH)
 			ss += worker_batch_memuse();
-		// align to 64KiB
+		
 		ss = (ss + (64 << 10) - 1) & ~((64 << 10) - 1);
-		//printf("stack size: " FSZ "\n",ss);
+		
 		tret = pthread_attr_setstacksize(tattrp,ss);
 		if (tret)
 			perror("pthread_attr_setstacksize");
@@ -740,19 +793,19 @@ int main(int argc,char **argv)
 		u64 sumcalc = 0,sumsuccess = 0,sumrestart = 0;
 		for (int i = 0;i < numthreads;++i) {
 			u32 newt,tdiff;
-			// numcalc
+			
 			newt = VEC_BUF(stats,i).numcalc.v;
 			tdiff = newt - VEC_BUF(tstats,i).oldnumcalc;
 			VEC_BUF(tstats,i).oldnumcalc = newt;
 			VEC_BUF(tstats,i).numcalc += (u64)tdiff;
 			sumcalc += VEC_BUF(tstats,i).numcalc;
-			// numsuccess
+			
 			newt = VEC_BUF(stats,i).numsuccess.v;
 			tdiff = newt - VEC_BUF(tstats,i).oldnumsuccess;
 			VEC_BUF(tstats,i).oldnumsuccess = newt;
 			VEC_BUF(tstats,i).numsuccess += (u64)tdiff;
 			sumsuccess += VEC_BUF(tstats,i).numsuccess;
-			// numrestart
+			
 			newt = VEC_BUF(stats,i).numrestart.v;
 			tdiff = newt - VEC_BUF(tstats,i).oldnumrestart;
 			VEC_BUF(tstats,i).oldnumrestart = newt;

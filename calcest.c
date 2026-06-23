@@ -2,24 +2,13 @@
 #include <stddef.h>
 #include <math.h>
 
-/*
- * as per scribblemaniac's explanation:
- * t - number of trials
- * n - character count
- * p - probability
- * condition: >=1 matches
- * formula: t = log(1-p)/log(1-1/32^n)
- * comes from:
- *  distribution X~Binomial(t, 1/32^n)
- *  P(X>=1)=p
- */
 
 const double probs[] = { 0.5, 0.8, 0.9, 0.95, 0.99 };
 const int charcounts[] = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
 int main(int argc,char **argv)
 {
-	// TODO
+	
 	(void) argc;
 	(void) argv;
 

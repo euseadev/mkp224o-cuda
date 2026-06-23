@@ -1,14 +1,5 @@
 #include "fe.h"
 
-/*
-h = -f
-
-Preconditions:
-   |f| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
-
-Postconditions:
-   |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
-*/
 
 void fe_neg(fe h,const fe f)
 {

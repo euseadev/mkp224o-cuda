@@ -22,16 +22,6 @@ static crypto_uint64 load_4(const unsigned char *in)
   return result;
 }
 
-/*
-Input:
-  a[0]+256*a[1]+...+256^31*a[31] = a
-  b[0]+256*b[1]+...+256^31*b[31] = b
-  c[0]+256*c[1]+...+256^31*c[31] = c
-
-Output:
-  s[0]+256*s[1]+...+256^31*s[31] = (ab+c) mod l
-  where l = 2^252 + 27742317777372353535851937790883648493.
-*/
 
 void sc_muladd(unsigned char *s,const unsigned char *a,const unsigned char *b,const unsigned char *c)
 {

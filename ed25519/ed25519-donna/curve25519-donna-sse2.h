@@ -1,9 +1,3 @@
-/*
-	Public domain by Andrew M. <liquidsun@gmail.com>
-	See: https://github.com/floodyberry/curve25519-donna
-
-	SSE2 curve25519 implementation
-*/
 
 #if defined(ED25519_SSE2)
 
@@ -25,7 +19,6 @@ typedef union packedelem64_t {
 	xmmi v;
 } packedelem64;
 
-/* 10 elements + an extra 2 to fit in 3 xmm registers */
 typedef uint32_t bignum25519[12];
 typedef packedelem32 packed32bignum25519[5];
 typedef packedelem64 packed64bignum25519[10];
@@ -35,24 +28,20 @@ static const packedelem32 top32bitmask = {{0x00000000, 0xffffffff, 0x00000000, 0
 static const packedelem32 top64bitmask = {{0x00000000, 0x00000000, 0xffffffff, 0xffffffff}};
 static const packedelem32 bot64bitmask = {{0xffffffff, 0xffffffff, 0x00000000, 0x00000000}};
 
-/* reduction masks */
 static const packedelem64 packedmask26 = {{0x03ffffff, 0x03ffffff}};
 static const packedelem64 packedmask25 = {{0x01ffffff, 0x01ffffff}};
 static const packedelem32 packedmask2625 = {{0x3ffffff,0,0x1ffffff,0}};
 static const packedelem32 packedmask26262626 = {{0x03ffffff, 0x03ffffff, 0x03ffffff, 0x03ffffff}};
 static const packedelem32 packedmask25252525 = {{0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff}};
 
-/* multipliers */
 static const packedelem64 packednineteen = {{19, 19}};
 static const packedelem64 packednineteenone = {{19, 1}};
 static const packedelem64 packedthirtyeight = {{38, 38}};
 static const packedelem64 packed3819 = {{19*2,19}};
 static const packedelem64 packed9638 = {{19*4,19*2}};
 
-/* 121666,121665 */
 static const packedelem64 packed121666121665 = {{121666, 121665}};
 
-/* 2*(2^255 - 19) = 0 mod p */
 static const packedelem32 packed2p0 = {{0x7ffffda,0x3fffffe,0x7fffffe,0x3fffffe}};
 static const packedelem32 packed2p1 = {{0x7fffffe,0x3fffffe,0x7fffffe,0x3fffffe}};
 static const packedelem32 packed2p2 = {{0x7fffffe,0x3fffffe,0x0000000,0x0000000}};
@@ -60,7 +49,6 @@ static const packedelem32 packed2p2 = {{0x7fffffe,0x3fffffe,0x0000000,0x0000000}
 static const packedelem32 packed32packed2p0 = {{0x7ffffda,0x7ffffda,0x3fffffe,0x3fffffe}};
 static const packedelem32 packed32packed2p1 = {{0x7fffffe,0x7fffffe,0x3fffffe,0x3fffffe}};
 
-/* 4*(2^255 - 19) = 0 mod p */
 static const packedelem32 packed4p0 = {{0xfffffb4,0x7fffffc,0xffffffc,0x7fffffc}};
 static const packedelem32 packed4p1 = {{0xffffffc,0x7fffffc,0xffffffc,0x7fffffc}};
 static const packedelem32 packed4p2 = {{0xffffffc,0x7fffffc,0x0000000,0x0000000}};
@@ -68,7 +56,6 @@ static const packedelem32 packed4p2 = {{0xffffffc,0x7fffffc,0x0000000,0x0000000}
 static const packedelem32 packed32packed4p0 = {{0xfffffb4,0xfffffb4,0x7fffffc,0x7fffffc}};
 static const packedelem32 packed32packed4p1 = {{0xffffffc,0xffffffc,0x7fffffc,0x7fffffc}};
 
-/* out = in */
 DONNA_INLINE static void
 curve25519_copy(bignum25519 out, const bignum25519 in) {
 	xmmi x0,x1,x2;
@@ -80,7 +67,6 @@ curve25519_copy(bignum25519 out, const bignum25519 in) {
 	_mm_store_si128((xmmi*)out + 2, x2);
 }
 
-/* out = a + b */
 DONNA_INLINE static void
 curve25519_add(bignum25519 out, const bignum25519 a, const bignum25519 b) {
 	xmmi a0,a1,a2,b0,b1,b2;
@@ -244,7 +230,6 @@ curve25519_sub_reduce(bignum25519 out, const bignum25519 a, const bignum25519 b)
 	_mm_store_si128((xmmi*)out + 2, _mm_unpackhi_epi32(r4, r5));
 }
 
-
 DONNA_INLINE static void
 curve25519_neg(bignum25519 out, const bignum25519 b) {
 	xmmi a0,a1,a2,b0,b1,b2;
@@ -280,7 +265,6 @@ curve25519_neg(bignum25519 out, const bignum25519 b) {
 }
 
 
-/* Multiply two numbers: out = in2 * in */
 static void 
 curve25519_mul(bignum25519 out, const bignum25519 r, const bignum25519 s) {
 	xmmi m01,m23,m45,m67,m89;
@@ -342,7 +326,7 @@ curve25519_mul(bignum25519 out, const bignum25519 r, const bignum25519 s) {
 	m89 = _mm_add_epi64(m89,_mm_mul_epu32(r7,s23));
 	m89 = _mm_add_epi64(m89,_mm_mul_epu32(r9,s01));
 
-	/* shift up */
+	
 	m89 = _mm_unpackhi_epi64(m67,_mm_slli_si128(m89,8));
 	m67 = _mm_unpackhi_epi64(m45,_mm_slli_si128(m67,8));
 	m45 = _mm_unpackhi_epi64(m23,_mm_slli_si128(m45,8));
@@ -604,12 +588,12 @@ curve25519_add_reduce_packed32(packedelem32 *out, const packedelem32 *r, const p
 	r3 = _mm_add_epi32(r[3].v, s[3].v);
 	r4 = _mm_add_epi32(r[4].v, s[4].v);
 
-	s0 = _mm_unpacklo_epi64(r0, r2); /* 00 44 */
-	s1 = _mm_unpackhi_epi64(r0, r2); /* 11 55 */
-	s2 = _mm_unpacklo_epi64(r1, r3); /* 22 66 */
-	s3 = _mm_unpackhi_epi64(r1, r3); /* 33 77 */
-	s4 = _mm_unpacklo_epi64(_mm_setzero_si128(), r4);  /* 00 88 */
-	s5 = _mm_unpackhi_epi64(_mm_setzero_si128(), r4);  /* 00 99 */
+	s0 = _mm_unpacklo_epi64(r0, r2); 
+	s1 = _mm_unpackhi_epi64(r0, r2); 
+	s2 = _mm_unpacklo_epi64(r1, r3); 
+	s3 = _mm_unpackhi_epi64(r1, r3); 
+	s4 = _mm_unpacklo_epi64(_mm_setzero_si128(), r4);  
+	s5 = _mm_unpackhi_epi64(_mm_setzero_si128(), r4);  
 
 	c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
 	c1 = _mm_srli_epi32(s1, 25); c2 = _mm_srli_epi32(s3, 25); s1 = _mm_and_si128(s1, packedmask25252525.v); s3 = _mm_and_si128(s3, packedmask25252525.v); s2 = _mm_add_epi32(s2, c1); s4 = _mm_add_epi32(s4, _mm_unpackhi_epi64(_mm_setzero_si128(), c2)); s0 = _mm_add_epi32(s0, _mm_unpacklo_epi64(_mm_setzero_si128(), c2));
@@ -617,11 +601,11 @@ curve25519_add_reduce_packed32(packedelem32 *out, const packedelem32 *r, const p
 	c1 = _mm_srli_epi32(s3, 25); c2 = _mm_srli_epi32(s5, 25); s3 = _mm_and_si128(s3, packedmask25252525.v); s5 = _mm_and_si128(s5, packedmask25252525.v); s4 = _mm_add_epi32(s4, c1); s0 = _mm_add_epi32(s0, _mm_or_si128(_mm_slli_si128(c1, 8), _mm_srli_si128(_mm_add_epi32(_mm_add_epi32(_mm_slli_epi32(c2, 4), _mm_slli_epi32(c2, 1)), c2), 8)));
 	c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
 
-	out[0].v = _mm_unpacklo_epi64(s0, s1); /* 00 11 */
-	out[1].v = _mm_unpacklo_epi64(s2, s3); /* 22 33 */
-	out[2].v = _mm_unpackhi_epi64(s0, s1); /* 44 55 */
-	out[3].v = _mm_unpackhi_epi64(s2, s3); /* 66 77 */
-	out[4].v = _mm_unpackhi_epi64(s4, s5); /* 88 99 */
+	out[0].v = _mm_unpacklo_epi64(s0, s1); 
+	out[1].v = _mm_unpacklo_epi64(s2, s3); 
+	out[2].v = _mm_unpackhi_epi64(s0, s1); 
+	out[3].v = _mm_unpackhi_epi64(s2, s3); 
+	out[4].v = _mm_unpackhi_epi64(s4, s5); 
 }
 
 DONNA_INLINE static void
@@ -644,24 +628,24 @@ curve25519_sub_packed32(packedelem32 *out, const packedelem32 *r, const packedel
 	r2 = _mm_add_epi32(r[2].v, packed32packed2p1.v);
 	r3 = _mm_add_epi32(r[3].v, packed32packed2p1.v);
 	r4 = _mm_add_epi32(r[4].v, packed32packed2p1.v);
-	r0 = _mm_sub_epi32(r0, s[0].v); /* 00 11 */
-	r1 = _mm_sub_epi32(r1, s[1].v); /* 22 33 */
-	r2 = _mm_sub_epi32(r2, s[2].v); /* 44 55 */
-	r3 = _mm_sub_epi32(r3, s[3].v); /* 66 77 */
-	r4 = _mm_sub_epi32(r4, s[4].v); /* 88 99 */
+	r0 = _mm_sub_epi32(r0, s[0].v); 
+	r1 = _mm_sub_epi32(r1, s[1].v); 
+	r2 = _mm_sub_epi32(r2, s[2].v); 
+	r3 = _mm_sub_epi32(r3, s[3].v); 
+	r4 = _mm_sub_epi32(r4, s[4].v); 
 
-	s0 = _mm_unpacklo_epi64(r0, r2); /* 00 44 */
-	s1 = _mm_unpackhi_epi64(r0, r2); /* 11 55 */
-	s2 = _mm_unpacklo_epi64(r1, r3); /* 22 66 */
-	s3 = _mm_unpackhi_epi64(r1, r3); /* 33 77 */
+	s0 = _mm_unpacklo_epi64(r0, r2); 
+	s1 = _mm_unpackhi_epi64(r0, r2); 
+	s2 = _mm_unpacklo_epi64(r1, r3); 
+	s3 = _mm_unpackhi_epi64(r1, r3); 
 
 	c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
 	c1 = _mm_srli_epi32(s1, 25); c2 = _mm_srli_epi32(s3, 25); s1 = _mm_and_si128(s1, packedmask25252525.v); s3 = _mm_and_si128(s3, packedmask25252525.v); s2 = _mm_add_epi32(s2, c1); r4 = _mm_add_epi32(r4, _mm_srli_si128(c2, 8)); s0 = _mm_add_epi32(s0,  _mm_slli_si128(c2, 8));
 
-	out[0].v = _mm_unpacklo_epi64(s0, s1); /* 00 11 */
-	out[1].v = _mm_unpacklo_epi64(s2, s3); /* 22 33 */
-	out[2].v = _mm_unpackhi_epi64(s0, s1); /* 44 55 */
-	out[3].v = _mm_unpackhi_epi64(s2, s3); /* 66 77 */
+	out[0].v = _mm_unpacklo_epi64(s0, s1); 
+	out[1].v = _mm_unpacklo_epi64(s2, s3); 
+	out[2].v = _mm_unpackhi_epi64(s0, s1); 
+	out[3].v = _mm_unpackhi_epi64(s2, s3); 
 	out[4].v = r4;
 }
 
@@ -676,18 +660,18 @@ curve25519_sub_after_basic_packed32(packedelem32 *out, const packedelem32 *r, co
 	r2 = _mm_add_epi32(r[2].v, packed32packed4p1.v);
 	r3 = _mm_add_epi32(r[3].v, packed32packed4p1.v);
 	r4 = _mm_add_epi32(r[4].v, packed32packed4p1.v);
-	r0 = _mm_sub_epi32(r0, s[0].v); /* 00 11 */
-	r1 = _mm_sub_epi32(r1, s[1].v); /* 22 33 */
-	r2 = _mm_sub_epi32(r2, s[2].v); /* 44 55 */
-	r3 = _mm_sub_epi32(r3, s[3].v); /* 66 77 */
-	r4 = _mm_sub_epi32(r4, s[4].v); /* 88 99 */
+	r0 = _mm_sub_epi32(r0, s[0].v); 
+	r1 = _mm_sub_epi32(r1, s[1].v); 
+	r2 = _mm_sub_epi32(r2, s[2].v); 
+	r3 = _mm_sub_epi32(r3, s[3].v); 
+	r4 = _mm_sub_epi32(r4, s[4].v); 
 
-	s0 = _mm_unpacklo_epi64(r0, r2); /* 00 44 */
-	s1 = _mm_unpackhi_epi64(r0, r2); /* 11 55 */
-	s2 = _mm_unpacklo_epi64(r1, r3); /* 22 66 */
-	s3 = _mm_unpackhi_epi64(r1, r3); /* 33 77 */
-	s4 = _mm_unpacklo_epi64(_mm_setzero_si128(), r4);  /* 00 88 */
-	s5 = _mm_unpackhi_epi64(_mm_setzero_si128(), r4);  /* 00 99 */
+	s0 = _mm_unpacklo_epi64(r0, r2); 
+	s1 = _mm_unpackhi_epi64(r0, r2); 
+	s2 = _mm_unpacklo_epi64(r1, r3); 
+	s3 = _mm_unpackhi_epi64(r1, r3); 
+	s4 = _mm_unpacklo_epi64(_mm_setzero_si128(), r4);  
+	s5 = _mm_unpackhi_epi64(_mm_setzero_si128(), r4);  
 
 	c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
 	c1 = _mm_srli_epi32(s1, 25); c2 = _mm_srli_epi32(s3, 25); s1 = _mm_and_si128(s1, packedmask25252525.v); s3 = _mm_and_si128(s3, packedmask25252525.v); s2 = _mm_add_epi32(s2, c1); s4 = _mm_add_epi32(s4, _mm_unpackhi_epi64(_mm_setzero_si128(), c2)); s0 = _mm_add_epi32(s0, _mm_unpacklo_epi64(_mm_setzero_si128(), c2));
@@ -695,11 +679,11 @@ curve25519_sub_after_basic_packed32(packedelem32 *out, const packedelem32 *r, co
 	c1 = _mm_srli_epi32(s3, 25); c2 = _mm_srli_epi32(s5, 25); s3 = _mm_and_si128(s3, packedmask25252525.v); s5 = _mm_and_si128(s5, packedmask25252525.v); s4 = _mm_add_epi32(s4, c1); s0 = _mm_add_epi32(s0, _mm_or_si128(_mm_slli_si128(c1, 8), _mm_srli_si128(_mm_add_epi32(_mm_add_epi32(_mm_slli_epi32(c2, 4), _mm_slli_epi32(c2, 1)), c2), 8)));
 	c1 = _mm_srli_epi32(s0, 26); c2 = _mm_srli_epi32(s2, 26); s0 = _mm_and_si128(s0, packedmask26262626.v); s2 = _mm_and_si128(s2, packedmask26262626.v); s1 = _mm_add_epi32(s1, c1); s3 = _mm_add_epi32(s3, c2);
 
-	out[0].v = _mm_unpacklo_epi64(s0, s1); /* 00 11 */
-	out[1].v = _mm_unpacklo_epi64(s2, s3); /* 22 33 */
-	out[2].v = _mm_unpackhi_epi64(s0, s1); /* 44 55 */
-	out[3].v = _mm_unpackhi_epi64(s2, s3); /* 66 77 */
-	out[4].v = _mm_unpackhi_epi64(s4, s5); /* 88 99 */
+	out[0].v = _mm_unpacklo_epi64(s0, s1); 
+	out[1].v = _mm_unpacklo_epi64(s2, s3); 
+	out[2].v = _mm_unpackhi_epi64(s0, s1); 
+	out[3].v = _mm_unpackhi_epi64(s2, s3); 
+	out[4].v = _mm_unpackhi_epi64(s4, s5); 
 }
 
 DONNA_INLINE static void
@@ -921,7 +905,6 @@ curve25519_square_packed64(packedelem64 *out, const packedelem64 *r) {
 }
 
 
-/* Take a little-endian, 32-byte number and expand it into polynomial form */
 static void
 curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 	uint32_t x0,x1,x2,x3,x4,x5,x6,x7;
@@ -949,9 +932,6 @@ curve25519_expand(bignum25519 out, const unsigned char in[32]) {
 	out[11] = 0;
 }
 
-/* Take a fully reduced polynomial form number and contract it into a
- * little-endian, 32-byte array
- */
 static void
 curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	bignum25519 ALIGN(16) f;
@@ -979,12 +959,12 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	carry_pass_full()
 	carry_pass_full()
 
-	/* now t is between 0 and 2^255-1, properly carried. */
-	/* case 1: between 0 and 2^255-20. case 2: between 2^255-19 and 2^255-1. */
+	
+	
 	f[0] += 19;
 	carry_pass_full()
 
-	/* now between 19 and 2^255-1 in both cases, and offset by 19. */
+	
 	f[0] += (1 << 26) - 19;
 	f[1] += (1 << 25) - 1;
 	f[2] += (1 << 26) - 1;
@@ -996,7 +976,7 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	f[8] += (1 << 26) - 1;
 	f[9] += (1 << 25) - 1;
 
-	/* now between 2^255 and 2^256-20, and offset by 2^255. */
+	
 	carry_pass_final()
 
 	#undef carry_pass
@@ -1033,7 +1013,6 @@ curve25519_contract(unsigned char out[32], const bignum25519 in) {
 	#undef F
 }
 
-/* if (iswap) swap(a, b) */
 DONNA_INLINE static void
 curve25519_swap_conditional(bignum25519 a, bignum25519 b, uint32_t iswap) {
 	const uint32_t swap = (uint32_t)(-(int32_t)iswap);
@@ -1067,7 +1046,6 @@ curve25519_swap_conditional(bignum25519 a, bignum25519 b, uint32_t iswap) {
 	_mm_store_si128((xmmi *)a + 2, x2);
 }
 
-/* out = (flag) ? out : in */
 DONNA_INLINE static void
 curve25519_move_conditional_bytes(uint8_t out[96], const uint8_t in[96], uint32_t flag) {
 	xmmi a0,a1,a2,a3,a4,a5,b0,b1,b2,b3,b4,b5;
@@ -1112,4 +1090,4 @@ curve25519_move_conditional_bytes(uint8_t out[96], const uint8_t in[96], uint32_
 	_mm_store_si128((xmmi*)out + 5, a5);
 }
 
-#endif /* defined(ED25519_SSE2) */
+#endif 

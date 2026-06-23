@@ -8,7 +8,7 @@ void sc25519_slide(signed char r[256], const sc25519 *s, int swindowsize)
   unsigned long long sv2 = s->v[2];
   unsigned long long sv3 = s->v[3];
 
-  /* first put the binary expansion into r  */
+  
   for(i=0;i<64;i++) {
     r[i] = sv0 & 1;
     r[i+64] = sv1 & 1;
@@ -20,7 +20,7 @@ void sc25519_slide(signed char r[256], const sc25519 *s, int swindowsize)
     sv3 >>= 1;
   }
 
-  /* Making it sliding window */
+  
   for (j = 0;j < soplen;++j) 
   {
     if (r[j]) {
